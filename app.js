@@ -41,6 +41,8 @@ const els = {
   bestList: document.querySelector("#bestList"),
   historyList: document.querySelector("#historyList"),
   template: document.querySelector("#historyItemTemplate"),
+  imageViewer: document.querySelector("#imageViewer"),
+  viewerImage: document.querySelector("#viewerImage"),
 };
 
 let imageDataUrl = "";
@@ -460,6 +462,19 @@ function clearForm() {
   updateCalculated();
 }
 
+function openImageViewer(src) {
+  if (!src) return;
+  els.viewerImage.src = src;
+  els.imageViewer.hidden = false;
+  document.body.classList.add("viewer-open");
+}
+
+function closeImageViewer() {
+  els.imageViewer.hidden = true;
+  els.viewerImage.removeAttribute("src");
+  document.body.classList.remove("viewer-open");
+}
+
 function renderBest() {
   const filterSize = els.filterSize.value;
   const bestByKey = new Map();
@@ -528,12 +543,13 @@ function renderHistory() {
     thumbImage.loading = "lazy";
     thumbImage.decoding = "async";
     if (item.imageDataUrl) {
-      thumb.href = item.imageDataUrl;
+      thumb.disabled = false;
+      thumb.addEventListener("click", () => openImageViewer(item.imageDataUrl));
       thumbImage.src = item.imageDataUrl;
       thumbImage.hidden = false;
       thumb.querySelector("span").hidden = true;
     } else {
-      thumb.removeAttribute("href");
+      thumb.disabled = true;
       thumbImage.hidden = true;
       thumb.querySelector("span").hidden = false;
     }
@@ -635,6 +651,10 @@ document.addEventListener("click", (event) => {
     event.preventDefault();
     setGeminiKey();
   }
+  if (action === "close-viewer") {
+    event.preventDefault();
+    closeImageViewer();
+  }
   if (action === "clear-form") {
     event.preventDefault();
     clearForm();
@@ -647,6 +667,9 @@ document.addEventListener("click", (event) => {
     saveHistory();
     render();
   }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !els.imageViewer.hidden) closeImageViewer();
 });
 els.form.addEventListener("input", updateCalculated);
 els.form.addEventListener("submit", (event) => {

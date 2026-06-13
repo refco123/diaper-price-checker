@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=19" />
+    <link rel="stylesheet" href="styles.css?v=20" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -64,6 +64,9 @@
       </symbol>
       <symbol id="icon-trash" viewBox="0 0 24 24">
         <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"></path>
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="M6 6l12 12M18 6 6 18"></path>
       </symbol>
     </svg>
 
@@ -223,10 +226,10 @@
 
     <template id="historyItemTemplate">
       <article class="history-item">
-        <a class="item-thumb" target="_blank" rel="noopener" aria-label="保存画像を開く">
+        <button class="item-thumb" type="button" aria-label="保存画像を拡大表示">
           <img alt="保存した商品画像" />
           <span>画像なし</span>
-        </a>
+        </button>
         <div class="item-date">
           <strong></strong>
           <span></span>
@@ -246,6 +249,16 @@
         </div>
       </article>
     </template>
+
+    <div id="imageViewer" class="image-viewer" hidden>
+      <button class="image-viewer-backdrop" type="button" data-action="close-viewer" aria-label="画像を閉じる"></button>
+      <div class="image-viewer-panel" role="dialog" aria-modal="true" aria-label="保存画像の拡大表示">
+        <button class="image-viewer-close" type="button" data-action="close-viewer" aria-label="閉じる">
+          <svg><use href="#icon-close"></use></svg>
+        </button>
+        <img id="viewerImage" alt="保存した商品画像の拡大表示" />
+      </div>
+    </div>
 
     <input id="nativeCameraInput" class="hidden-file-input" type="file" accept="image/*" capture="environment" />
     <input id="imageInput" class="hidden-file-input" type="file" accept="image/*" />
