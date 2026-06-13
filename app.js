@@ -301,6 +301,15 @@ function applyGeminiResult(result) {
   updateCalculated();
 }
 
+function confidenceLabel(value) {
+  if (value === undefined || value === null || value === "") return "未検出";
+  const score = Number(value);
+  if (Number.isNaN(score)) return String(value);
+  if (score >= 0.75) return "高";
+  if (score >= 0.4) return "中";
+  return "低";
+}
+
 function formatGeminiResult(result) {
   return [
     "Gemini読取結果",
@@ -311,7 +320,7 @@ function formatGeminiResult(result) {
     `金額: ${result.price ? yen(Number(result.price)) : (els.price.value ? yen(Number(els.price.value)) : "未検出")}`,
     `店舗: ${result.store || els.store.value || "未検出"}`,
     `メモ: ${result.memo || "なし"}`,
-    `信頼度: ${result.confidence ?? "未検出"}`,
+    `信頼度: ${confidenceLabel(result.confidence)}`,
   ].join("\n");
 }
 
