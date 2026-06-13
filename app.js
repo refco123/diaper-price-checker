@@ -143,11 +143,23 @@ function switchTab(tabName) {
   });
 }
 
-function setImage(dataUrl) {
-  imageDataUrl = dataUrl;
+function showPreviewImage(dataUrl) {
   els.preview.src = dataUrl;
   els.preview.hidden = false;
+  els.preview.style.display = "block";
   els.emptyPreview.hidden = true;
+}
+
+function hidePreviewImage() {
+  els.preview.removeAttribute("src");
+  els.preview.hidden = true;
+  els.preview.style.display = "none";
+  els.emptyPreview.hidden = false;
+}
+
+function setImage(dataUrl) {
+  imageDataUrl = dataUrl;
+  showPreviewImage(dataUrl);
 }
 
 function openFileInput(input, message) {
@@ -521,8 +533,7 @@ function clearForm() {
   els.coupon.value = "0";
   els.cashback.value = "0";
   imageDataUrl = "";
-  els.preview.hidden = true;
-  els.emptyPreview.hidden = false;
+  hidePreviewImage();
   updateCalculated();
 }
 
@@ -542,12 +553,9 @@ function editHistoryItem(id) {
   els.memo.value = item.memo || "";
   imageDataUrl = item.imageDataUrl || "";
   if (imageDataUrl) {
-    els.preview.src = imageDataUrl;
-    els.preview.hidden = false;
-    els.emptyPreview.hidden = true;
+    showPreviewImage(imageDataUrl);
   } else {
-    els.preview.hidden = true;
-    els.emptyPreview.hidden = false;
+    hidePreviewImage();
   }
   els.saveRecord.innerHTML = '<svg><use href="#icon-save"></use></svg>更新';
   updateCalculated();

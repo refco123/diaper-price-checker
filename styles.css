@@ -318,6 +318,12 @@ h1 {
   background: #050914;
 }
 
+.camera-frame img[hidden],
+.camera-frame img:not([src]),
+.camera-frame img[src=""] {
+  display: none !important;
+}
+
 .hidden-file-input {
   position: fixed;
   left: -9999px;
