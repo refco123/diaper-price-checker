@@ -491,6 +491,23 @@ textarea:focus {
   font-size: clamp(1rem, 2vw, 1.35rem);
 }
 
+.unit-result {
+  position: relative;
+  border-color: rgba(140, 255, 210, 0.42);
+  background:
+    linear-gradient(135deg, rgba(82, 233, 255, 0.18), rgba(140, 255, 210, 0.12)),
+    var(--panel-soft);
+  box-shadow: 0 0 26px rgba(82, 233, 255, 0.18);
+}
+
+.unit-result strong,
+.unit-value,
+.item-price strong {
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 .form-actions,
 .section-title {
   display: flex;
@@ -551,7 +568,7 @@ textarea:focus {
 }
 
 .best-card strong {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: var(--good);
 }
 
@@ -653,11 +670,11 @@ textarea:focus {
   min-width: 124px;
   display: grid;
   justify-items: end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .item-price strong {
-  font-size: 1.24rem;
+  font-size: 1.72rem;
 }
 
 .item-buttons {
@@ -1049,6 +1066,21 @@ textarea:focus {
 .item-price strong {
   color: #8cffd2;
   text-shadow: 0 0 14px rgba(140, 255, 210, 0.24);
+}
+
+.unit-result {
+  border-color: rgba(140, 255, 210, 0.48);
+  background:
+    linear-gradient(135deg, rgba(82, 233, 255, 0.2), rgba(140, 255, 210, 0.13)),
+    rgba(7, 13, 26, 0.72);
+  box-shadow: 0 0 30px rgba(82, 233, 255, 0.2), inset 0 0 22px rgba(140, 255, 210, 0.08);
+}
+
+.unit-result strong,
+.best-card .unit-value,
+.item-price strong {
+  color: #eaffff;
+  text-shadow: 0 0 10px rgba(140, 255, 210, 0.55), 0 0 26px rgba(82, 233, 255, 0.34);
 }
 
 .item-price .delete-history {

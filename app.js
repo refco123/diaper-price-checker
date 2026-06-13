@@ -599,7 +599,7 @@ function renderBest() {
     card.className = "best-card";
     card.innerHTML = `
       <span>${item.productName} / ${item.size}</span>
-      <strong>${unit(item.unitPrice)}</strong>
+      <strong class="unit-value">${unit(item.unitPrice)}</strong>
       <span>${item.count}単位 ${yen(item.net)} / ${item.store || "店舗未入力"} / ${item.date}</span>
     `;
     els.bestList.append(card);
@@ -663,8 +663,8 @@ function renderHistory() {
     tags[1].textContent = `${item.count}単位`;
     tags[2].textContent = `店頭 ${yen(item.price)} / 値引 ${yen(item.coupon)} / CB ${yen(item.cashback)}`;
     node.querySelector(".item-note").textContent = item.memo;
-    node.querySelector(".item-price strong").textContent = yen(item.net);
-    node.querySelector(".item-price span").textContent = `${unit(item.unitPrice)} / 単位`;
+    node.querySelector(".item-price strong").textContent = `${unit(item.unitPrice)}`;
+    node.querySelector(".item-price span").textContent = `${yen(item.net)} / ${item.count}単位`;
     els.historyList.append(node);
   }
 }
