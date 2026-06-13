@@ -35,6 +35,7 @@ const els = {
   unitPrice: document.querySelector("#unitPrice"),
   bestCompare: document.querySelector("#bestCompare"),
   clearForm: document.querySelector("#clearForm"),
+  saveRecord: document.querySelector("#saveRecord"),
   clearHistory: document.querySelector("#clearHistory"),
   exportCsv: document.querySelector("#exportCsv"),
   refreshApp: document.querySelector("#refreshApp"),
@@ -50,6 +51,7 @@ const els = {
 let imageDataUrl = "";
 let history = loadHistory();
 let historyRenderSignature = "";
+let editingId = "";
 
 els.date.valueAsDate = new Date();
 
@@ -471,10 +473,10 @@ async function runOcr() {
   els.ocrStatus.textContent = formatLocalOcrResult(text);
 }
 
-function recordFromForm() {
+function recordFromForm(existingRecord = null) {
   const numbers = getNumbers();
   return {
-    id: createId(),
+    id: existingRecord?.id || createId(),
     category: els.category.value || "おむつ",
     productName: els.productName.value.trim(),
     size: els.size.value,
@@ -488,12 +490,15 @@ function recordFromForm() {
     date: els.date.value,
     memo: els.memo.value.trim(),
     imageDataUrl,
-    createdAt: new Date().toISOString(),
+    createdAt: existingRecord?.createdAt || new Date().toISOString(),
+    updatedAt: existingRecord ? new Date().toISOString() : undefined,
   };
 }
 
 function clearForm() {
   els.form.reset();
+  editingId = "";
+  els.saveRecord.innerHTML = '<svg><use href="#icon-save"></use></svg>保存';
   els.date.valueAsDate = new Date();
   els.coupon.value = "0";
   els.cashback.value = "0";
@@ -501,6 +506,45 @@ function clearForm() {
   els.preview.hidden = true;
   els.emptyPreview.hidden = false;
   updateCalculated();
+}
+
+function editHistoryItem(id) {
+  const item = history.find((record) => record.id === id);
+  if (!item) return;
+  editingId = id;
+  els.category.value = item.category || "おむつ";
+  els.productName.value = item.productName || "";
+  els.size.value = item.size || "";
+  els.count.value = item.count || "";
+  els.price.value = item.price || "";
+  els.coupon.value = item.coupon || "0";
+  els.cashback.value = item.cashback || "0";
+  els.store.value = item.store || "";
+  els.date.value = item.date || new Date().toISOString().slice(0, 10);
+  els.memo.value = item.memo || "";
+  imageDataUrl = item.imageDataUrl || "";
+  if (imageDataUrl) {
+    els.preview.src = imageDataUrl;
+    els.preview.hidden = false;
+    els.emptyPreview.hidden = true;
+  } else {
+    els.preview.hidden = true;
+    els.emptyPreview.hidden = false;
+  }
+  els.saveRecord.innerHTML = '<svg><use href="#icon-save"></use></svg>更新';
+  updateCalculated();
+  switchTab("check");
+  els.ocrStatus.textContent = "履歴を編集できます。変更後に更新を押してください。";
+}
+
+function deleteHistoryItem(id) {
+  const before = history.length;
+  history = history.filter((record) => record.id !== id);
+  if (history.length === before) return;
+  saveHistory();
+  if (editingId === id) clearForm();
+  historyRenderSignature = "";
+  render();
 }
 
 function openImageViewer(src) {
@@ -591,6 +635,8 @@ function renderHistory() {
 
   for (const item of sortedHistory) {
     const node = els.template.content.cloneNode(true);
+    const article = node.querySelector(".history-item");
+    article.dataset.id = item.id;
     const date = new Date(`${item.date}T00:00:00`);
     const dateText = Number.isNaN(date.getTime())
       ? item.date
@@ -601,7 +647,6 @@ function renderHistory() {
     thumbImage.decoding = "async";
     if (item.imageDataUrl) {
       thumb.disabled = false;
-      thumb.addEventListener("click", () => openImageViewer(item.imageDataUrl));
       thumbImage.src = item.imageDataUrl;
       thumbImage.hidden = false;
       thumb.querySelector("span").hidden = true;
@@ -620,11 +665,6 @@ function renderHistory() {
     node.querySelector(".item-note").textContent = item.memo;
     node.querySelector(".item-price strong").textContent = yen(item.net);
     node.querySelector(".item-price span").textContent = `${unit(item.unitPrice)} / 単位`;
-    node.querySelector(".delete-history").addEventListener("click", () => {
-      history = history.filter((record) => record.id !== item.id);
-      saveHistory();
-      render();
-    });
     els.historyList.append(node);
   }
 }
@@ -682,6 +722,25 @@ els.nativeCameraInput.addEventListener("change", (event) => {
 els.imageInput.addEventListener("change", (event) => {
   handleImageFile(event.target.files?.[0]);
 });
+els.historyList.addEventListener("click", (event) => {
+  const article = event.target.closest(".history-item");
+  if (!article) return;
+  const id = article.dataset.id;
+  if (event.target.closest(".item-thumb")) {
+    const item = history.find((record) => record.id === id);
+    if (item?.imageDataUrl) openImageViewer(item.imageDataUrl);
+    return;
+  }
+  if (event.target.closest(".edit-history")) {
+    event.preventDefault();
+    editHistoryItem(id);
+    return;
+  }
+  if (event.target.closest(".delete-history")) {
+    event.preventDefault();
+    deleteHistoryItem(id);
+  }
+});
 document.querySelector(".app-tabs").addEventListener("click", (event) => {
   const button = event.target.closest("[data-tab]");
   if (!button) return;
@@ -729,10 +788,17 @@ document.addEventListener("keydown", (event) => {
 els.form.addEventListener("input", updateCalculated);
 els.form.addEventListener("submit", (event) => {
   event.preventDefault();
-  const record = recordFromForm();
+  const existingRecord = editingId ? history.find((item) => item.id === editingId) : null;
+  const record = recordFromForm(existingRecord);
   if (!record.productName || !record.size || !record.count || !record.price) return;
-  history.push(record);
+  if (existingRecord) {
+    history = history.map((item) => item.id === editingId ? record : item);
+  } else {
+    history.push(record);
+  }
+  editingId = "";
   saveHistory();
+  historyRenderSignature = "";
   render();
   clearForm();
   switchTab("history");

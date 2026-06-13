@@ -660,6 +660,12 @@ textarea:focus {
   font-size: 1.24rem;
 }
 
+.item-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .item-price button {
   width: 32px;
   min-height: 32px;
@@ -667,6 +673,11 @@ textarea:focus {
   border-radius: 12px;
   color: var(--danger);
   background: var(--danger-soft);
+}
+
+.item-price .edit-history {
+  color: var(--good);
+  background: rgba(71, 255, 182, 0.12);
 }
 
 .item-price button svg {
@@ -806,7 +817,7 @@ textarea:focus {
     align-items: center;
   }
 
-  .item-price button {
+  .item-buttons {
     position: absolute;
     top: 12px;
     right: 12px;
@@ -1040,10 +1051,16 @@ textarea:focus {
   text-shadow: 0 0 14px rgba(140, 255, 210, 0.24);
 }
 
-.item-price button {
+.item-price .delete-history {
   color: #ff9abc;
   background: rgba(255, 93, 143, 0.13);
   border-color: rgba(255, 93, 143, 0.28);
+}
+
+.item-price .edit-history {
+  color: #8cffd2;
+  background: rgba(82, 233, 255, 0.12);
+  border-color: rgba(82, 233, 255, 0.26);
 }
 
 .empty-state {

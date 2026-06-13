@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=25" />
+    <link rel="stylesheet" href="styles.css?v=26" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -64,6 +64,10 @@
       <symbol id="icon-eraser" viewBox="0 0 24 24">
         <path d="m4 15 8-8a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-6 6H8l-4-4a1.5 1.5 0 0 1 0-2Z"></path>
         <path d="m9 10 6 6M14 20h7"></path>
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17l-1 3Z"></path>
+        <path d="m14 7 3 3"></path>
       </symbol>
       <symbol id="icon-trash" viewBox="0 0 24 24">
         <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"></path>
@@ -205,7 +209,7 @@
 
             <div class="form-actions">
               <button id="clearForm" class="secondary" type="button" data-action="clear-form"><svg><use href="#icon-eraser"></use></svg>クリア</button>
-              <button type="submit"><svg><use href="#icon-save"></use></svg>保存</button>
+              <button id="saveRecord" type="submit"><svg><use href="#icon-save"></use></svg>保存</button>
             </div>
           </form>
         </section>
@@ -275,7 +279,10 @@
         <div class="item-price">
           <strong></strong>
           <span></span>
-          <button class="delete-history" type="button" title="削除" aria-label="履歴を削除"><svg><use href="#icon-trash"></use></svg></button>
+          <div class="item-buttons">
+            <button class="edit-history" type="button" title="編集" aria-label="履歴を編集"><svg><use href="#icon-edit"></use></svg></button>
+            <button class="delete-history" type="button" title="削除" aria-label="履歴を削除"><svg><use href="#icon-trash"></use></svg></button>
+          </div>
         </div>
       </article>
     </template>
