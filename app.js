@@ -296,6 +296,35 @@ function applyGeminiResult(result) {
   updateCalculated();
 }
 
+function formatGeminiResult(result) {
+  return [
+    "Gemini読取結果",
+    `種別: ${result.category || els.category.value || "未検出"}`,
+    `商品名: ${result.productName || els.productName.value || "未検出"}`,
+    `サイズ/規格: ${result.size || els.size.value || "未検出"}`,
+    `枚数/容量/個数: ${result.count || els.count.value || "未検出"}`,
+    `金額: ${result.price ? yen(Number(result.price)) : (els.price.value ? yen(Number(els.price.value)) : "未検出")}`,
+    `店舗: ${result.store || els.store.value || "未検出"}`,
+    `メモ: ${result.memo || "なし"}`,
+    `信頼度: ${result.confidence ?? "未検出"}`,
+  ].join("\n");
+}
+
+function formatLocalOcrResult(text) {
+  return [
+    "ローカルOCR結果",
+    "反映項目",
+    `種別: ${els.category.value || "未検出"}`,
+    `商品名: ${els.productName.value || "未検出"}`,
+    `サイズ/規格: ${els.size.value || "未検出"}`,
+    `枚数/容量/個数: ${els.count.value || "未検出"}`,
+    `金額: ${els.price.value ? yen(Number(els.price.value)) : "未検出"}`,
+    "",
+    "読み取った全文",
+    text.trim() || "文字を検出できませんでした",
+  ].join("\n");
+}
+
 async function runGeminiOcr() {
   const apiKey = getGeminiKey();
   if (!apiKey) throw new Error("Gemini APIキーが未設定です");
@@ -352,7 +381,7 @@ async function runGeminiOcr() {
   const result = extractJson(text);
   applyGeminiResult(result);
   updateGeminiStatus(" / 最終読取: Gemini");
-  els.ocrStatus.textContent = `Gemini読取を反映しました。${result.memo || "違う場合は手入力で直してください。"}`;
+  els.ocrStatus.textContent = formatGeminiResult(result);
 }
 
 function parseText(text) {
@@ -439,7 +468,7 @@ async function runOcr() {
     return;
   }
   parseText(text);
-  els.ocrStatus.textContent = `読取候補を反映しました。違う場合は手入力で直してください: ${text.replace(/\s+/g, " ").slice(0, 110)}`;
+  els.ocrStatus.textContent = formatLocalOcrResult(text);
 }
 
 function recordFromForm() {
