@@ -44,6 +44,7 @@ const els = {
 
 let imageDataUrl = "";
 let history = loadHistory();
+let historyRenderSignature = "";
 
 els.date.valueAsDate = new Date();
 
@@ -461,6 +462,24 @@ function renderBest() {
 }
 
 function renderHistory() {
+  const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const signature = JSON.stringify(sortedHistory.map((item) => [
+    item.id,
+    item.productName,
+    item.size,
+    item.count,
+    item.price,
+    item.coupon,
+    item.cashback,
+    item.net,
+    item.unitPrice,
+    item.store,
+    item.date,
+    item.memo,
+    item.imageDataUrl ? item.imageDataUrl.length : 0,
+  ]));
+  if (signature === historyRenderSignature) return;
+  historyRenderSignature = signature;
   els.historyList.innerHTML = "";
 
   if (!history.length) {
@@ -468,7 +487,7 @@ function renderHistory() {
     return;
   }
 
-  for (const item of [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
+  for (const item of sortedHistory) {
     const node = els.template.content.cloneNode(true);
     const date = new Date(`${item.date}T00:00:00`);
     const dateText = Number.isNaN(date.getTime())
@@ -476,6 +495,8 @@ function renderHistory() {
       : date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
     const thumb = node.querySelector(".item-thumb");
     const thumbImage = thumb.querySelector("img");
+    thumbImage.loading = "lazy";
+    thumbImage.decoding = "async";
     if (item.imageDataUrl) {
       thumb.href = item.imageDataUrl;
       thumbImage.src = item.imageDataUrl;

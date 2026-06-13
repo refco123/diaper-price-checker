@@ -569,6 +569,7 @@ textarea:focus {
   height: 100%;
   object-fit: cover;
   display: block;
+  background: var(--panel-soft);
 }
 
 .item-date {
@@ -679,16 +680,24 @@ textarea:focus {
 
   .history-item {
     position: relative;
-    grid-template-columns: 1fr;
+    grid-template-columns: 76px minmax(0, 1fr);
     padding-right: 54px;
+    align-items: start;
   }
 
   .item-thumb {
-    width: 100%;
-    aspect-ratio: 16 / 9;
+    width: 76px;
+    aspect-ratio: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .item-date,
+  .item-main {
+    grid-column: 2;
   }
 
   .item-price {
+    grid-column: 1 / -1;
     justify-items: start;
     grid-template-columns: auto auto;
     align-items: center;
