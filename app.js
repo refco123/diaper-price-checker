@@ -326,21 +326,27 @@ function confidenceLabel(value) {
 
 function formatGeminiResult(result) {
   return [
-    "Gemini読取結果",
+    "スキャン結果",
+    "読み取り: Gemini",
+    `信頼度: ${confidenceLabel(result.confidence)}`,
+    "",
+    "商品情報",
     `種別: ${result.category || els.category.value || "未検出"}`,
     `商品名: ${result.productName || els.productName.value || "未検出"}`,
     `サイズ/規格: ${result.size || els.size.value || "未検出"}`,
     `枚数/容量/個数: ${result.count || els.count.value || "未検出"}`,
     `金額: ${result.price ? yen(Number(result.price)) : (els.price.value ? yen(Number(els.price.value)) : "未検出")}`,
     `店舗: ${result.store || els.store.value || "未検出"}`,
+    "",
     `メモ: ${result.memo || "なし"}`,
-    `信頼度: ${confidenceLabel(result.confidence)}`,
   ].join("\n");
 }
 
 function formatLocalOcrResult(text) {
   return [
-    "ローカルOCR結果",
+    "スキャン結果",
+    "読み取り: ローカルOCR",
+    "",
     "反映項目",
     `種別: ${els.category.value || "未検出"}`,
     `商品名: ${els.productName.value || "未検出"}`,
