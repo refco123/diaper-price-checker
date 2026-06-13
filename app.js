@@ -32,7 +32,6 @@ const els = {
   netPrice: document.querySelector("#netPrice"),
   unitPrice: document.querySelector("#unitPrice"),
   bestCompare: document.querySelector("#bestCompare"),
-  sampleFill: document.querySelector("#sampleFill"),
   clearForm: document.querySelector("#clearForm"),
   clearHistory: document.querySelector("#clearHistory"),
   exportCsv: document.querySelector("#exportCsv"),
@@ -151,8 +150,10 @@ function openFileInput(input, message) {
 function handleImageFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    setImage(String(reader.result));
+  reader.addEventListener("load", async () => {
+    const loadedImage = String(reader.result);
+    const compressedImage = await resizeImageDataUrl(loadedImage, 900, 0.72);
+    setImage(`data:image/jpeg;base64,${compressedImage}`);
     switchTab("check");
     els.ocrStatus.textContent = "画像を読み込みました。必要なら読取を押してください。";
   });
@@ -417,46 +418,6 @@ function recordFromForm() {
   };
 }
 
-function fillSample() {
-  const sampleDate = new Date().toISOString().slice(0, 10);
-  const benchmark = {
-    id: createId(),
-    productName: "メリーズ エアスルー",
-    size: "L",
-    count: 54,
-    price: 1680,
-    coupon: 120,
-    cashback: 40,
-    net: 1520,
-    unitPrice: 1520 / 54,
-    store: "過去サンプル",
-    date: sampleDate,
-    memo: "比較用の過去価格",
-    imageDataUrl: "",
-    createdAt: new Date(Date.now() - 1000).toISOString(),
-  };
-
-  const hasBenchmark = history.some(
-    (item) => item.productName === benchmark.productName && item.size === benchmark.size && item.store === benchmark.store
-  );
-  if (!hasBenchmark) {
-    history.push(benchmark);
-    saveHistory();
-  }
-
-  els.productName.value = "メリーズ エアスルー";
-  els.size.value = "L";
-  els.count.value = "54";
-  els.price.value = "1580";
-  els.coupon.value = "150";
-  els.cashback.value = "80";
-  els.store.value = "サンプル店舗";
-  els.date.value = sampleDate;
-  els.memo.value = "サンプル: 実質1350円、1枚25.00円";
-  els.ocrStatus.textContent = "サンプルを入力しました。過去サンプル最安と比較できます。";
-  render();
-}
-
 function clearForm() {
   els.form.reset();
   els.date.valueAsDate = new Date();
@@ -513,6 +474,18 @@ function renderHistory() {
     const dateText = Number.isNaN(date.getTime())
       ? item.date
       : date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", weekday: "short" });
+    const thumb = node.querySelector(".item-thumb");
+    const thumbImage = thumb.querySelector("img");
+    if (item.imageDataUrl) {
+      thumb.href = item.imageDataUrl;
+      thumbImage.src = item.imageDataUrl;
+      thumbImage.hidden = false;
+      thumb.querySelector("span").hidden = true;
+    } else {
+      thumb.removeAttribute("href");
+      thumbImage.hidden = true;
+      thumb.querySelector("span").hidden = false;
+    }
     node.querySelector(".item-date strong").textContent = dateText;
     node.querySelector(".item-date span").textContent = item.store || "店舗未入力";
     node.querySelector("h3").textContent = `${item.productName} / ${item.size}`;
@@ -606,14 +579,6 @@ document.addEventListener("click", (event) => {
     runOcr().catch((error) => {
       els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
     });
-  }
-  if (action === "sample") {
-    event.preventDefault();
-    try {
-      fillSample();
-    } catch (error) {
-      els.ocrStatus.textContent = `サンプル入力に失敗しました: ${error.message}`;
-    }
   }
   if (action === "clear-form") {
     event.preventDefault();

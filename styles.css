@@ -486,7 +486,7 @@ textarea:focus {
 
 .form-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.35fr;
+  grid-template-columns: 1fr 1.35fr;
 }
 
 .section-title {
@@ -542,11 +542,33 @@ textarea:focus {
 
 .history-item {
   display: grid;
-  grid-template-columns: minmax(92px, 0.28fr) minmax(180px, 1fr) minmax(124px, auto);
+  grid-template-columns: 74px minmax(92px, 0.28fr) minmax(180px, 1fr) minmax(124px, auto);
   gap: 12px;
   padding: 12px;
   align-items: center;
   box-shadow: 0 6px 18px rgba(23, 45, 43, 0.05);
+}
+
+.item-thumb {
+  width: 74px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .item-date {
@@ -659,6 +681,11 @@ textarea:focus {
     position: relative;
     grid-template-columns: 1fr;
     padding-right: 54px;
+  }
+
+  .item-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
   }
 
   .item-price {
