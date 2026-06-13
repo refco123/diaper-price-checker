@@ -196,7 +196,7 @@ h1 {
   width: min(480px, calc(100vw - 18px));
   margin: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   padding: 7px;
   border: 1px solid rgba(18, 115, 107, 0.14);
@@ -312,6 +312,7 @@ h1 {
     #13211f;
   border: 1px solid #253a36;
   color: #edf5f2;
+  cursor: pointer;
 }
 
 .camera-frame img {
@@ -927,7 +928,7 @@ textarea:focus {
 @media (max-width: 390px) {
   .app-tabs {
     width: calc(100vw - 12px);
-    grid-template-columns: minmax(0, 1fr) 66px minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
     padding: 6px;
   }

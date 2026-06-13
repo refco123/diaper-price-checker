@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=36" />
+    <link rel="stylesheet" href="styles.css?v=37" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -98,10 +98,6 @@
         <svg><use href="#icon-check"></use></svg>
         チェック
       </button>
-      <button class="tab-button camera-tab-button" type="button" data-action="open-capture-choice" aria-label="画像を撮影または追加">
-        <span><svg><use href="#icon-camera"></use></svg></span>
-        カメラ
-      </button>
       <button class="tab-button" type="button" data-tab="history" aria-selected="false">
         <svg><use href="#icon-history"></use></svg>
         履歴
@@ -111,13 +107,13 @@
     <main class="app-shell">
       <div class="tab-panel is-active" data-panel="check">
         <section class="capture-panel" aria-label="撮影と画像読み取り">
-          <div class="camera-frame" aria-label="画像を撮影または追加">
+          <button class="camera-frame" type="button" data-action="open-capture-choice" aria-label="画像を撮影または追加">
             <img id="preview" alt="" hidden style="display: none" />
             <span id="emptyPreview" class="empty-preview" aria-label="画像未選択">
               <span class="empty-preview-icon"><svg><use href="#icon-plus"></use></svg></span>
               <strong>画像を撮影/追加</strong>
             </span>
-          </div>
+          </button>
 
           <div id="geminiStatus" class="gemini-status" role="status"></div>
           <div id="ocrStatus" class="status" role="status">撮影した画像から読み取れた文字は入力欄へ反映できます。</div>
