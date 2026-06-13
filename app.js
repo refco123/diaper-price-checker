@@ -11,6 +11,7 @@ if ("serviceWorker" in navigator) {
 const els = {
   preview: document.querySelector("#preview"),
   nativeCameraInput: document.querySelector("#nativeCameraInput"),
+  imageInput: document.querySelector("#imageInput"),
   emptyPreview: document.querySelector("#emptyPreview"),
   tabButtons: document.querySelectorAll(".tab-button[data-tab]"),
   tabPanels: document.querySelectorAll(".tab-panel"),
@@ -136,6 +137,23 @@ function setImage(dataUrl) {
   els.preview.src = dataUrl;
   els.preview.hidden = false;
   els.emptyPreview.hidden = true;
+}
+
+function openFileInput(input, message) {
+  input.value = "";
+  input.click();
+  els.ocrStatus.textContent = message;
+}
+
+function handleImageFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    setImage(String(reader.result));
+    switchTab("check");
+    els.ocrStatus.textContent = "画像を読み込みました。必要なら読取を押してください。";
+  });
+  reader.readAsDataURL(file);
 }
 
 function parseText(text) {
@@ -353,20 +371,11 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
-els.nativeCameraInput.addEventListener("click", () => {
-  els.nativeCameraInput.value = "";
-  els.ocrStatus.textContent = "スマホのカメラで商品と値札を撮影してください。";
-});
 els.nativeCameraInput.addEventListener("change", (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    setImage(String(reader.result));
-    switchTab("check");
-    els.ocrStatus.textContent = "撮影画像を読み込みました。必要なら読取を押してください。";
-  });
-  reader.readAsDataURL(file);
+  handleImageFile(event.target.files?.[0]);
+});
+els.imageInput.addEventListener("change", (event) => {
+  handleImageFile(event.target.files?.[0]);
 });
 els.runOcr.addEventListener("click", () => {
   runOcr().catch((error) => {
@@ -379,6 +388,45 @@ document.querySelector(".app-tabs").addEventListener("click", (event) => {
   event.preventDefault();
   switchTab(button.dataset.tab);
 });
+document.addEventListener("click", (event) => {
+  const actionButton = event.target.closest("[data-action]");
+  if (!actionButton) return;
+  const action = actionButton.dataset.action;
+  if (action === "open-camera") {
+    event.preventDefault();
+    openFileInput(els.nativeCameraInput, "スマホのカメラで商品と値札を撮影してください。");
+  }
+  if (action === "open-image") {
+    event.preventDefault();
+    openFileInput(els.imageInput, "商品と値札の画像を選んでください。");
+  }
+  if (action === "run-ocr") {
+    event.preventDefault();
+    runOcr().catch((error) => {
+      els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
+    });
+  }
+  if (action === "sample") {
+    event.preventDefault();
+    try {
+      fillSample();
+    } catch (error) {
+      els.ocrStatus.textContent = `サンプル入力に失敗しました: ${error.message}`;
+    }
+  }
+  if (action === "clear-form") {
+    event.preventDefault();
+    clearForm();
+  }
+  if (action === "clear-history") {
+    event.preventDefault();
+    if (!history.length) return;
+    if (!confirm("履歴をすべて削除しますか？")) return;
+    history = [];
+    saveHistory();
+    render();
+  }
+});
 els.form.addEventListener("input", updateCalculated);
 els.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -389,21 +437,6 @@ els.form.addEventListener("submit", (event) => {
   render();
   clearForm();
   switchTab("history");
-});
-els.sampleFill.addEventListener("click", () => {
-  try {
-    fillSample();
-  } catch (error) {
-    els.ocrStatus.textContent = `サンプル入力に失敗しました: ${error.message}`;
-  }
-});
-els.clearForm.addEventListener("click", clearForm);
-els.clearHistory.addEventListener("click", () => {
-  if (!history.length) return;
-  if (!confirm("履歴をすべて削除しますか？")) return;
-  history = [];
-  saveHistory();
-  render();
 });
 els.exportCsv.addEventListener("click", exportCsv);
 els.filterSize.addEventListener("change", renderBest);

@@ -69,10 +69,10 @@
         <svg><use href="#icon-check"></use></svg>
         チェック
       </button>
-      <label class="tab-button camera-tab-button" for="nativeCameraInput">
+      <button class="tab-button camera-tab-button" type="button" data-action="open-camera" aria-label="カメラを起動">
         <span><svg><use href="#icon-camera"></use></svg></span>
         カメラ
-      </label>
+      </button>
       <button class="tab-button" type="button" data-tab="history" aria-selected="false">
         <svg><use href="#icon-history"></use></svg>
         履歴
@@ -84,14 +84,16 @@
         <section class="capture-panel" aria-label="撮影と画像読み取り">
           <div class="camera-frame">
             <img id="preview" alt="撮影した商品画像のプレビュー" hidden />
-            <input id="nativeCameraInput" class="native-camera-input" type="file" accept="image/*" capture="environment" />
             <div id="emptyPreview" class="empty-preview">
               <strong>商品と値札を撮影</strong>
               <span>下のカメラボタンで撮影</span>
             </div>
           </div>
 
-          <button id="runOcr" class="scan-button" type="button"><svg><use href="#icon-scan"></use></svg>画像を読み取る</button>
+          <div class="capture-actions">
+            <button class="secondary" type="button" data-action="open-image"><svg><use href="#icon-camera"></use></svg>画像</button>
+            <button id="runOcr" class="scan-button" type="button" data-action="run-ocr"><svg><use href="#icon-scan"></use></svg>画像を読み取る</button>
+          </div>
 
           <div id="ocrStatus" class="status" role="status">撮影した画像から読み取れた文字は入力欄へ反映できます。</div>
         </section>
@@ -163,8 +165,8 @@
             </div>
 
             <div class="form-actions">
-              <button id="sampleFill" class="secondary" type="button"><svg><use href="#icon-spark"></use></svg>サンプル</button>
-              <button id="clearForm" class="secondary" type="button"><svg><use href="#icon-eraser"></use></svg>クリア</button>
+              <button id="sampleFill" class="secondary" type="button" data-action="sample"><svg><use href="#icon-spark"></use></svg>サンプル</button>
+              <button id="clearForm" class="secondary" type="button" data-action="clear-form"><svg><use href="#icon-eraser"></use></svg>クリア</button>
               <button type="submit"><svg><use href="#icon-save"></use></svg>保存</button>
             </div>
           </form>
@@ -192,7 +194,7 @@
         <section class="history-panel" aria-label="履歴">
           <div class="section-title">
             <h2>履歴</h2>
-            <button id="clearHistory" class="danger" type="button"><svg><use href="#icon-trash"></use></svg>全削除</button>
+            <button id="clearHistory" class="danger" type="button" data-action="clear-history"><svg><use href="#icon-trash"></use></svg>全削除</button>
           </div>
           <div id="historyList" class="history-list"></div>
         </section>
@@ -220,6 +222,9 @@
         </div>
       </article>
     </template>
+
+    <input id="nativeCameraInput" class="hidden-file-input" type="file" accept="image/*" capture="environment" />
+    <input id="imageInput" class="hidden-file-input" type="file" accept="image/*" />
 
     <script src="app.js" defer></script>
   </body>

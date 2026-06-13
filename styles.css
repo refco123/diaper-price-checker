@@ -182,13 +182,13 @@ h1 {
   position: fixed;
   left: 50%;
   right: auto;
-  bottom: max(10px, env(safe-area-inset-bottom));
+  bottom: 10px;
   transform: translateX(-50%);
-  z-index: 5;
-  width: min(480px, calc(100% - 18px));
+  z-index: 50;
+  width: min(480px, calc(100vw - 18px));
   margin: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
   gap: 6px;
   padding: 7px;
   border: 1px solid rgba(18, 115, 107, 0.14);
@@ -196,6 +196,12 @@ h1 {
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 12px 34px rgba(23, 45, 43, 0.16);
   backdrop-filter: blur(12px);
+}
+
+@supports (bottom: env(safe-area-inset-bottom)) {
+  .app-tabs {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+  }
 }
 
 .tab-button {
@@ -210,6 +216,9 @@ h1 {
   font-size: 0.76rem;
   line-height: 1;
   white-space: nowrap;
+  word-break: keep-all;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tab-button:hover {
@@ -300,7 +309,7 @@ h1 {
   display: block;
 }
 
-.native-camera-input {
+.hidden-file-input {
   position: fixed;
   left: -9999px;
   top: auto;
@@ -336,9 +345,15 @@ h1 {
   color: #bac9c5;
 }
 
+.capture-actions {
+  display: grid;
+  grid-template-columns: 0.72fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .scan-button {
   width: 100%;
-  margin-top: 12px;
 }
 
 .toolbar {
@@ -386,6 +401,17 @@ label {
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
+  word-break: keep-all;
+  overflow: hidden;
+}
+
+.app-tabs .tab-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.app-tabs .tab-button:not(.camera-tab-button) {
+  min-width: 0;
 }
 
 .app-tabs .camera-tab-button {
@@ -646,14 +672,14 @@ textarea:focus {
 
 @media (max-width: 390px) {
   .app-tabs {
-    width: calc(100% - 12px);
-    grid-template-columns: minmax(0, 1fr) 68px minmax(0, 1fr);
+    width: calc(100vw - 12px);
+    grid-template-columns: minmax(0, 1fr) 66px minmax(0, 1fr);
     gap: 4px;
     padding: 6px;
   }
 
-  .tab-button {
-    font-size: 0.72rem;
+  .app-tabs .tab-button {
+    font-size: 0.68rem;
     padding-inline: 4px;
   }
 
