@@ -374,6 +374,25 @@ label {
   font-weight: 800;
 }
 
+.app-tabs .tab-button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.app-tabs .camera-tab-button {
+  min-height: 62px;
+  color: #fff;
+}
+
 input,
 select,
 textarea {

@@ -57,7 +57,7 @@ function saveHistory() {
 }
 
 function createId() {
-  if (crypto?.randomUUID) return crypto.randomUUID();
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -373,8 +373,11 @@ els.runOcr.addEventListener("click", () => {
     els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
   });
 });
-els.tabButtons.forEach((button) => {
-  button.addEventListener("click", () => switchTab(button.dataset.tab));
+document.querySelector(".app-tabs").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-tab]");
+  if (!button) return;
+  event.preventDefault();
+  switchTab(button.dataset.tab);
 });
 els.form.addEventListener("input", updateCalculated);
 els.form.addEventListener("submit", (event) => {
