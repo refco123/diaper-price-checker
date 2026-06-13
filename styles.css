@@ -348,7 +348,7 @@ h1 {
 
 .capture-actions {
   display: grid;
-  grid-template-columns: 0.72fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-top: 12px;
 }

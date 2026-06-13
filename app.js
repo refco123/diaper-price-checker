@@ -17,7 +17,6 @@ const els = {
   emptyPreview: document.querySelector("#emptyPreview"),
   tabButtons: document.querySelectorAll(".tab-button[data-tab]"),
   tabPanels: document.querySelectorAll(".tab-panel"),
-  runOcr: document.querySelector("#runOcr"),
   ocrStatus: document.querySelector("#ocrStatus"),
   geminiStatus: document.querySelector("#geminiStatus"),
   form: document.querySelector("#priceForm"),
@@ -52,6 +51,7 @@ let imageDataUrl = "";
 let history = loadHistory();
 let historyRenderSignature = "";
 let editingId = "";
+let isOcrRunning = false;
 
 els.date.valueAsDate = new Date();
 
@@ -164,7 +164,10 @@ function handleImageFile(file) {
     const compressedImage = await resizeImageDataUrl(loadedImage, 900, 0.72);
     setImage(`data:image/jpeg;base64,${compressedImage}`);
     switchTab("check");
-    els.ocrStatus.textContent = "画像を読み込みました。必要なら読取を押してください。";
+    els.ocrStatus.textContent = "画像を読み込みました。自動で読み取っています...";
+    runOcr().catch((error) => {
+      els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
+    });
   });
   reader.readAsDataURL(file);
 }
@@ -411,66 +414,72 @@ function parseText(text) {
 }
 
 async function runOcr() {
+  if (isOcrRunning) return;
   if (!imageDataUrl) {
     els.ocrStatus.textContent = "先にカメラで撮影してください。";
     return;
   }
+  isOcrRunning = true;
 
   try {
-    await runGeminiOcr();
-    return;
-  } catch (error) {
-    updateGeminiStatus(` / Gemini失敗: ${error.message}`);
-    els.ocrStatus.textContent = `${error.message} ローカルOCRに切り替えます...`;
+    try {
+      await runGeminiOcr();
+      return;
+    } catch (error) {
+      updateGeminiStatus(` / Gemini失敗: ${error.message}`);
+      els.ocrStatus.textContent = `${error.message} ローカルOCRに切り替えます...`;
+    }
+
+    els.ocrStatus.textContent = "ローカルOCRで画像を読み取っています...";
+    const img = await loadImage(imageDataUrl);
+
+    let text = "";
+    if ("TextDetector" in window) {
+      const detector = new TextDetector();
+      const result = await detector.detect(img);
+      text = result.map((item) => item.rawValue).join("\n");
+    } else if (window.Tesseract?.recognize) {
+      const fullImage = preprocessImage(img, { scale: 1.8, contrast: 1.35, brightness: 8 });
+      const priceStrip = preprocessImage(img, {
+        scale: 3,
+        crop: { x: 0, y: 0.42, width: 1, height: 0.36 },
+        contrast: 1.75,
+        brightness: 18,
+        threshold: 145,
+      });
+
+      const fullResult = await Tesseract.recognize(fullImage, "jpn+eng", {
+        logger: (message) => {
+          if (message.status === "recognizing text") {
+            els.ocrStatus.textContent = `商品情報を読み取っています... ${Math.round(message.progress * 100)}%`;
+          }
+        },
+      });
+
+      const priceResult = await Tesseract.recognize(priceStrip, "eng", {
+        tessedit_char_whitelist: "0123456789,円税込税抜各￥¥.",
+        logger: (message) => {
+          if (message.status === "recognizing text") {
+            els.ocrStatus.textContent = `値札を読み取っています... ${Math.round(message.progress * 100)}%`;
+          }
+        },
+      });
+
+      text = `${fullResult.data?.text || ""}\n${priceResult.data?.text || ""}`;
+    } else {
+      els.ocrStatus.textContent = "OCRエンジンを読み込めませんでした。通信環境を確認して、再読み込みしてください。";
+      return;
+    }
+
+    if (!text) {
+      els.ocrStatus.textContent = "文字を検出できませんでした。正面から明るく撮ると読み取りやすくなります。";
+      return;
+    }
+    parseText(text);
+    els.ocrStatus.textContent = formatLocalOcrResult(text);
+  } finally {
+    isOcrRunning = false;
   }
-
-  els.ocrStatus.textContent = "ローカルOCRで画像を読み取っています...";
-  const img = await loadImage(imageDataUrl);
-
-  let text = "";
-  if ("TextDetector" in window) {
-    const detector = new TextDetector();
-    const result = await detector.detect(img);
-    text = result.map((item) => item.rawValue).join("\n");
-  } else if (window.Tesseract?.recognize) {
-    const fullImage = preprocessImage(img, { scale: 1.8, contrast: 1.35, brightness: 8 });
-    const priceStrip = preprocessImage(img, {
-      scale: 3,
-      crop: { x: 0, y: 0.42, width: 1, height: 0.36 },
-      contrast: 1.75,
-      brightness: 18,
-      threshold: 145,
-    });
-
-    const fullResult = await Tesseract.recognize(fullImage, "jpn+eng", {
-      logger: (message) => {
-        if (message.status === "recognizing text") {
-          els.ocrStatus.textContent = `商品情報を読み取っています... ${Math.round(message.progress * 100)}%`;
-        }
-      },
-    });
-
-    const priceResult = await Tesseract.recognize(priceStrip, "eng", {
-      tessedit_char_whitelist: "0123456789,円税込税抜各￥¥.",
-      logger: (message) => {
-        if (message.status === "recognizing text") {
-          els.ocrStatus.textContent = `値札を読み取っています... ${Math.round(message.progress * 100)}%`;
-        }
-      },
-    });
-
-    text = `${fullResult.data?.text || ""}\n${priceResult.data?.text || ""}`;
-  } else {
-    els.ocrStatus.textContent = "OCRエンジンを読み込めませんでした。通信環境を確認して、再読み込みしてください。";
-    return;
-  }
-
-  if (!text) {
-    els.ocrStatus.textContent = "文字を検出できませんでした。正面から明るく撮ると読み取りやすくなります。";
-    return;
-  }
-  parseText(text);
-  els.ocrStatus.textContent = formatLocalOcrResult(text);
 }
 
 function recordFromForm(existingRecord = null) {
@@ -758,12 +767,6 @@ document.addEventListener("click", (event) => {
   if (action === "open-image") {
     event.preventDefault();
     openFileInput(els.imageInput, "商品と値札の画像を選んでください。");
-  }
-  if (action === "run-ocr") {
-    event.preventDefault();
-    runOcr().catch((error) => {
-      els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
-    });
   }
   if (action === "close-viewer") {
     event.preventDefault();
