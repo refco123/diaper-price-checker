@@ -9,15 +9,12 @@ if ("serviceWorker" in navigator) {
 }
 
 const els = {
-  camera: document.querySelector("#camera"),
   preview: document.querySelector("#preview"),
-  canvas: document.querySelector("#snapshot"),
   nativeCameraInput: document.querySelector("#nativeCameraInput"),
   emptyPreview: document.querySelector("#emptyPreview"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabPanels: document.querySelectorAll(".tab-panel"),
-  startCamera: document.querySelector("#startCamera"),
-  takePhoto: document.querySelector("#takePhoto"),
+  openCamera: document.querySelector("#openCamera"),
   runOcr: document.querySelector("#runOcr"),
   ocrStatus: document.querySelector("#ocrStatus"),
   form: document.querySelector("#priceForm"),
@@ -43,7 +40,6 @@ const els = {
   template: document.querySelector("#historyItemTemplate"),
 };
 
-let stream = null;
 let imageDataUrl = "";
 let history = loadHistory();
 
@@ -135,7 +131,6 @@ function setImage(dataUrl) {
   imageDataUrl = dataUrl;
   els.preview.src = dataUrl;
   els.preview.hidden = false;
-  els.camera.hidden = true;
   els.emptyPreview.hidden = true;
 }
 
@@ -143,58 +138,6 @@ function openNativeCamera() {
   els.nativeCameraInput.value = "";
   els.nativeCameraInput.click();
   els.ocrStatus.textContent = "スマホのカメラで商品と値札を撮影してください。";
-}
-
-function waitForVideoReady(video) {
-  if (video.readyState >= 2 && video.videoWidth > 0) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("カメラ映像の準備に時間がかかっています。")), 8000);
-    video.addEventListener(
-      "loadedmetadata",
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      { once: true }
-    );
-  });
-}
-
-async function startCamera() {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    openNativeCamera();
-    return;
-  }
-
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" } },
-      audio: false,
-    });
-    els.camera.srcObject = stream;
-    els.camera.hidden = false;
-    els.preview.hidden = true;
-    els.emptyPreview.hidden = true;
-    await els.camera.play();
-    await waitForVideoReady(els.camera);
-    els.takePhoto.disabled = false;
-    els.ocrStatus.textContent = "カメラ準備OKです。商品と値札を入れて撮影してください。";
-  } catch {
-    openNativeCamera();
-  }
-}
-
-function takePhoto() {
-  const video = els.camera;
-  if (!stream || video.videoWidth === 0 || video.videoHeight === 0) {
-    openNativeCamera();
-    return;
-  }
-  const canvas = els.canvas;
-  canvas.width = video.videoWidth || 1280;
-  canvas.height = video.videoHeight || 960;
-  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-  setImage(canvas.toDataURL("image/jpeg", 0.9));
 }
 
 function parseText(text) {
@@ -312,8 +255,7 @@ function clearForm() {
   els.cashback.value = "0";
   imageDataUrl = "";
   els.preview.hidden = true;
-  els.camera.hidden = !stream;
-  els.emptyPreview.hidden = Boolean(stream);
+  els.emptyPreview.hidden = false;
   updateCalculated();
 }
 
@@ -413,19 +355,14 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
-els.startCamera.addEventListener("click", () => {
-  startCamera().catch((error) => {
-    els.ocrStatus.textContent = `カメラを開始できませんでした: ${error.message}`;
-  });
-});
-els.takePhoto.addEventListener("click", takePhoto);
+els.openCamera.addEventListener("click", openNativeCamera);
 els.nativeCameraInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     setImage(String(reader.result));
-    els.takePhoto.disabled = false;
+    switchTab("check");
     els.ocrStatus.textContent = "撮影画像を読み込みました。必要なら読取を押してください。";
   });
   reader.readAsDataURL(file);

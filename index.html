@@ -69,6 +69,10 @@
         <svg><use href="#icon-check"></use></svg>
         チェック
       </button>
+      <button class="tab-button camera-tab-button" id="openCamera" type="button" data-tab="camera" aria-selected="false">
+        <span><svg><use href="#icon-camera"></use></svg></span>
+        カメラ
+      </button>
       <button class="tab-button" type="button" data-tab="history" aria-selected="false">
         <svg><use href="#icon-history"></use></svg>
         履歴
@@ -79,21 +83,15 @@
       <div class="tab-panel is-active" data-panel="check">
         <section class="capture-panel" aria-label="撮影と画像読み取り">
           <div class="camera-frame">
-            <video id="camera" autoplay playsinline muted></video>
             <img id="preview" alt="撮影した商品画像のプレビュー" hidden />
-            <canvas id="snapshot" hidden></canvas>
             <input id="nativeCameraInput" class="native-camera-input" type="file" accept="image/*" capture="environment" aria-hidden="true" tabindex="-1" />
             <div id="emptyPreview" class="empty-preview">
               <strong>商品と値札を撮影</strong>
-              <span>カメラで単価チェック</span>
+              <span>下のカメラボタンで撮影</span>
             </div>
           </div>
 
-          <div class="toolbar" role="group" aria-label="撮影操作">
-            <button id="startCamera" type="button"><svg><use href="#icon-camera"></use></svg>カメラ</button>
-            <button id="takePhoto" type="button" disabled><svg><use href="#icon-shutter"></use></svg>撮影</button>
-            <button id="runOcr" type="button"><svg><use href="#icon-scan"></use></svg>読取</button>
-          </div>
+          <button id="runOcr" class="scan-button" type="button"><svg><use href="#icon-scan"></use></svg>画像を読み取る</button>
 
           <div id="ocrStatus" class="status" role="status">撮影した画像から読み取れた文字は入力欄へ反映できます。</div>
         </section>
