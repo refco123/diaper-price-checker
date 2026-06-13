@@ -11,7 +11,26 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=16" />
+    <style>
+      .app-tabs {
+        position: fixed !important;
+        left: 50% !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: 10px !important;
+        transform: translateX(-50%) !important;
+        z-index: 9999 !important;
+      }
+      @supports (bottom: env(safe-area-inset-bottom)) {
+        .app-tabs {
+          bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+        }
+      }
+      .app-shell {
+        padding-bottom: 112px !important;
+      }
+    </style>
   </head>
   <body>
     <svg class="icon-sprite" aria-hidden="true">

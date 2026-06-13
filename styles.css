@@ -912,16 +912,17 @@ textarea:focus {
 }
 
 .app-tabs {
-  position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: 10px;
-  transform: translateX(-50%);
-  z-index: 100;
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: 10px !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
 }
 
 @supports (bottom: env(safe-area-inset-bottom)) {
   .app-tabs {
-    bottom: calc(10px + env(safe-area-inset-bottom));
+    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
   }
 }
