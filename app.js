@@ -1,4 +1,6 @@
 const STORAGE_KEY = "diaper-price-checker:v1";
+const GEMINI_KEY_STORAGE = "diaper-price-checker:gemini-key";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -157,11 +159,45 @@ function handleImageFile(file) {
   reader.readAsDataURL(file);
 }
 
+function getGeminiKey() {
+  let key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
+  if (!key) {
+    key = prompt("Gemini APIキーを入力してください。端末内に保存され、GitHubには保存されません。") || "";
+    key = key.trim();
+    if (key) localStorage.setItem(GEMINI_KEY_STORAGE, key);
+  }
+  return key;
+}
+
 async function loadImage(dataUrl) {
   const img = new Image();
   img.src = dataUrl;
   await img.decode();
   return img;
+}
+
+function resizeImageDataUrl(dataUrl, maxSize = 1200, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.naturalWidth;
+      let height = img.naturalHeight;
+      if (width > height && width > maxSize) {
+        height = Math.round(height * (maxSize / width));
+        width = maxSize;
+      } else if (height > maxSize) {
+        width = Math.round(width * (maxSize / height));
+        height = maxSize;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality).split(",")[1]);
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
 }
 
 function preprocessImage(img, options = {}) {
@@ -201,6 +237,83 @@ function extractAmounts(text) {
     .filter((value) => value >= 100 && value <= 50000);
 }
 
+function extractJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("JSONを取得できませんでした");
+    return JSON.parse(match[0]);
+  }
+}
+
+function applyGeminiResult(result) {
+  if (result.productName) els.productName.value = String(result.productName).slice(0, 80);
+  if (result.size) {
+    const normalizedSize = String(result.size).replace("BIG", "Big");
+    const option = [...els.size.options].find((item) => item.value === normalizedSize || item.textContent === normalizedSize);
+    if (option) els.size.value = option.value || option.textContent;
+  }
+  if (Number(result.count) > 0) els.count.value = String(Number(result.count));
+  if (Number(result.price) > 0) els.price.value = String(Number(result.price));
+  if (result.store && !els.store.value) els.store.value = String(result.store).slice(0, 40);
+  if (result.memo) els.memo.value = String(result.memo).slice(0, 160);
+  updateCalculated();
+}
+
+async function runGeminiOcr() {
+  const apiKey = getGeminiKey();
+  if (!apiKey) throw new Error("Gemini APIキーが未設定です");
+  els.ocrStatus.textContent = "Geminiで商品と値札を解析しています...";
+  const base64Image = await resizeImageDataUrl(imageDataUrl);
+  const prompt = `
+あなたは日本のドラッグストアやスーパーのオムツ棚を読む専門OCRです。
+画像から、オムツの商品パッケージと値札を解析してください。
+
+返答はJSONだけにしてください。
+{
+  "productName": "商品名。例: パンパース はじめての肌へのいちばん",
+  "size": "新生児/S/M/L/Big/Bigより大きい/おやすみ のどれか。不明なら空文字",
+  "count": 60,
+  "price": 1848,
+  "store": "店舗名が見えれば。なければ空文字",
+  "memo": "判断根拠を短く。例: 値札は税込1,848円、左の商品は新生児60枚",
+  "confidence": 0.0
+}
+
+重要:
+- price は税込価格を優先してください。税込が見えなければ税抜価格。
+- 値札に「各」とある場合は該当商品の価格として扱ってください。
+- 画像内に複数商品がある場合は、中央または最も大きく写っている商品を優先してください。
+- count はパッケージに書かれた枚数です。
+- 推測できない項目は空文字または0にしてください。
+`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: "image/jpeg", data: base64Image } },
+        ],
+      }],
+      generationConfig: { responseMimeType: "application/json" },
+    }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 400 || response.status === 403) localStorage.removeItem(GEMINI_KEY_STORAGE);
+    throw new Error(`Gemini API Error: ${response.status}`);
+  }
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const result = extractJson(text);
+  applyGeminiResult(result);
+  els.ocrStatus.textContent = `Gemini読取を反映しました。${result.memo || "違う場合は手入力で直してください。"}`;
+}
+
 function parseText(text) {
   const normalized = text.replace(/[,\s]/g, "");
   const yenMatches = extractAmounts(text);
@@ -228,7 +341,14 @@ async function runOcr() {
     return;
   }
 
-  els.ocrStatus.textContent = "画像を読み取っています...";
+  try {
+    await runGeminiOcr();
+    return;
+  } catch (error) {
+    els.ocrStatus.textContent = `${error.message} ローカルOCRに切り替えます...`;
+  }
+
+  els.ocrStatus.textContent = "ローカルOCRで画像を読み取っています...";
   const img = await loadImage(imageDataUrl);
 
   let text = "";
