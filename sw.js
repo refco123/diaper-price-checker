@@ -1,8 +1,8 @@
-const CACHE_NAME = "diaper-price-checker-v24";
+const CACHE_NAME = "diaper-price-checker-v25";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=24",
+  "./styles.css?v=25",
   "./app.js",
   "./manifest.webmanifest",
   "./app-icon.svg"

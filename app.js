@@ -620,7 +620,7 @@ function renderHistory() {
     node.querySelector(".item-note").textContent = item.memo;
     node.querySelector(".item-price strong").textContent = yen(item.net);
     node.querySelector(".item-price span").textContent = `${unit(item.unitPrice)} / 単位`;
-    node.querySelector("button").addEventListener("click", () => {
+    node.querySelector(".delete-history").addEventListener("click", () => {
       history = history.filter((record) => record.id !== item.id);
       saveHistory();
       render();
