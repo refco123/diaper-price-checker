@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#12736b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="オムツ単価" />
+    <meta name="apple-mobile-web-app-title" content="単価チェッカー" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>オムツ単価チェッカー</title>
+    <title>単価チェッカー</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=20" />
+    <link rel="stylesheet" href="styles.css?v=21" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -75,8 +75,8 @@
         <svg><use href="#icon-scan"></use></svg>
       </div>
       <div class="brand-copy">
-        <p class="eyebrow">Diaper Price Checker</p>
-        <h1>オムツ単価チェッカー</h1>
+        <p class="eyebrow">Unit Price Checker</p>
+        <h1>単価チェッカー</h1>
       </div>
       <button id="exportCsv" class="icon-button" type="button" title="CSVを書き出す" aria-label="CSVを書き出す">
         <svg><use href="#icon-download"></use></svg>
@@ -126,11 +126,22 @@
           <form id="priceForm">
             <div class="form-grid">
               <label>
+                種別
+                <select id="category" name="category" required>
+                  <option>おむつ</option>
+                  <option>洗剤</option>
+                  <option>柔軟剤</option>
+                  <option>おしりふき</option>
+                  <option>日用品</option>
+                  <option>その他</option>
+                </select>
+              </label>
+              <label>
                 商品名
                 <input id="productName" name="productName" autocomplete="off" placeholder="例: パンパース さらさらケア" required />
               </label>
               <label>
-                サイズ
+                サイズ/規格
                 <select id="size" name="size" required>
                   <option value="">選択</option>
                   <option>新生児</option>
@@ -140,11 +151,16 @@
                   <option>Big</option>
                   <option>Bigより大きい</option>
                   <option>おやすみ</option>
+                  <option>本体</option>
+                  <option>詰替</option>
+                  <option>大容量</option>
+                  <option>セット</option>
+                  <option>その他</option>
                 </select>
               </label>
               <label>
-                枚数
-                <input id="count" name="count" inputmode="numeric" type="number" min="1" step="1" placeholder="例: 64" required />
+                枚数/容量/個数
+                <input id="count" name="count" inputmode="numeric" type="number" min="1" step="1" placeholder="例: 64 / 900" required />
               </label>
               <label>
                 店頭価格
@@ -179,7 +195,7 @@
                 <strong id="netPrice">0円</strong>
               </div>
               <div>
-                <span>1枚単価</span>
+                <span>1単位単価</span>
                 <strong id="unitPrice">0.00円</strong>
               </div>
               <div>
@@ -200,8 +216,17 @@
         <section class="best-panel" aria-label="最安値">
           <div class="section-title">
             <h2>現在の最安値</h2>
+            <select id="filterCategory" aria-label="種別で絞り込み">
+              <option value="">全種別</option>
+              <option>おむつ</option>
+              <option>洗剤</option>
+              <option>柔軟剤</option>
+              <option>おしりふき</option>
+              <option>日用品</option>
+              <option>その他</option>
+            </select>
             <select id="filterSize" aria-label="サイズで絞り込み">
-              <option value="">全サイズ</option>
+              <option value="">全規格</option>
               <option>新生児</option>
               <option>S</option>
               <option>M</option>
@@ -209,6 +234,11 @@
               <option>Big</option>
               <option>Bigより大きい</option>
               <option>おやすみ</option>
+              <option>本体</option>
+              <option>詰替</option>
+              <option>大容量</option>
+              <option>セット</option>
+              <option>その他</option>
             </select>
           </div>
           <div id="bestList" class="best-list"></div>
@@ -237,6 +267,7 @@
         <div class="item-main">
           <h3></h3>
           <div class="item-tags">
+            <span></span>
             <span></span>
             <span></span>
           </div>

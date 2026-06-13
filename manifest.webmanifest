@@ -1,12 +1,12 @@
 {
-  "name": "オムツ単価チェッカー",
-  "short_name": "オムツ単価",
-  "description": "オムツの1枚単価と過去最安値を外出先で確認するためのチェックアプリです。",
+  "name": "単価チェッカー",
+  "short_name": "単価チェック",
+  "description": "おむつ、洗剤、柔軟剤などの単価と最安値を外出先で確認するためのチェックアプリです。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6f5",
-  "theme_color": "#12736b",
+  "background_color": "#090f1e",
+  "theme_color": "#090f1e",
   "orientation": "portrait",
   "icons": [
     {

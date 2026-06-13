@@ -21,6 +21,7 @@ const els = {
   ocrStatus: document.querySelector("#ocrStatus"),
   geminiStatus: document.querySelector("#geminiStatus"),
   form: document.querySelector("#priceForm"),
+  category: document.querySelector("#category"),
   productName: document.querySelector("#productName"),
   size: document.querySelector("#size"),
   count: document.querySelector("#count"),
@@ -37,6 +38,7 @@ const els = {
   clearHistory: document.querySelector("#clearHistory"),
   exportCsv: document.querySelector("#exportCsv"),
   refreshApp: document.querySelector("#refreshApp"),
+  filterCategory: document.querySelector("#filterCategory"),
   filterSize: document.querySelector("#filterSize"),
   bestList: document.querySelector("#bestList"),
   historyList: document.querySelector("#historyList"),
@@ -87,15 +89,16 @@ function getNumbers() {
 }
 
 function bestKey(record) {
-  return `${record.productName.trim().toLowerCase()}|${record.size}`;
+  return `${record.category || "おむつ"}|${record.productName.trim().toLowerCase()}|${record.size}`;
 }
 
 function findBestForCurrent() {
+  const category = els.category.value || "おむつ";
   const productName = els.productName.value.trim().toLowerCase();
   const size = els.size.value;
   if (!productName || !size) return null;
   return history
-    .filter((item) => item.productName.trim().toLowerCase() === productName && item.size === size)
+    .filter((item) => (item.category || "おむつ") === category && item.productName.trim().toLowerCase() === productName && item.size === size)
     .sort((a, b) => a.unitPrice - b.unitPrice)[0] ?? null;
 }
 
@@ -276,6 +279,10 @@ function extractJson(text) {
 }
 
 function applyGeminiResult(result) {
+  if (result.category) {
+    const option = [...els.category.options].find((item) => item.value === result.category || item.textContent === result.category);
+    if (option) els.category.value = option.value || option.textContent;
+  }
   if (result.productName) els.productName.value = String(result.productName).slice(0, 80);
   if (result.size) {
     const normalizedSize = String(result.size).replace("BIG", "Big");
@@ -295,17 +302,18 @@ async function runGeminiOcr() {
   els.ocrStatus.textContent = "Geminiで商品と値札を解析しています...";
   const base64Image = await resizeImageDataUrl(imageDataUrl);
   const prompt = `
-あなたは日本のドラッグストアやスーパーのオムツ棚を読む専門OCRです。
-画像から、オムツの商品パッケージと値札を解析してください。
+あなたは日本のドラッグストアやスーパーの商品棚を読む専門OCRです。
+画像から、おむつ、洗剤、柔軟剤、おしりふきなどの商品パッケージと値札を解析してください。
 
 返答はJSONだけにしてください。
 {
+  "category": "おむつ/洗剤/柔軟剤/おしりふき/日用品/その他 のどれか",
   "productName": "商品名。例: パンパース はじめての肌へのいちばん",
-  "size": "新生児/S/M/L/Big/Bigより大きい/おやすみ のどれか。不明なら空文字",
+  "size": "おむつなら新生児/S/M/L/Big/Bigより大きい/おやすみ。洗剤などは本体/詰替/大容量/セット/その他。不明なら空文字",
   "count": 60,
   "price": 1848,
   "store": "店舗名が見えれば。なければ空文字",
-  "memo": "判断根拠を短く。例: 値札は税込1,848円、左の商品は新生児60枚",
+  "memo": "判断根拠を短く。例: 値札は税込1,848円、左の商品は新生児60枚 / 洗剤900g",
   "confidence": 0.0
 }
 
@@ -313,7 +321,7 @@ async function runGeminiOcr() {
 - price は税込価格を優先してください。税込が見えなければ税抜価格。
 - 値札に「各」とある場合は該当商品の価格として扱ってください。
 - 画像内に複数商品がある場合は、中央または最も大きく写っている商品を優先してください。
-- count はパッケージに書かれた枚数です。
+- count はパッケージに書かれた枚数、容量、個数です。例: 60枚なら60、900gなら900、1.26kgなら1260。
 - 推測できない項目は空文字または0にしてください。
 `;
 
@@ -350,9 +358,12 @@ async function runGeminiOcr() {
 function parseText(text) {
   const normalized = text.replace(/[,\s]/g, "");
   const yenMatches = extractAmounts(text);
-  const countMatch = normalized.match(/([0-9]{1,3})(枚|個入|枚入)/);
-  const sizeMatch = normalized.match(/(新生児|Bigより大きい|BIGより大きい|Big|BIG|[SML])/);
+  const countMatch = normalized.match(/([0-9]{1,5})(枚|個入|枚入|ml|mL|ML|g|G|個|本|包)/);
+  const sizeMatch = normalized.match(/(新生児|Bigより大きい|BIGより大きい|Big|BIG|詰替|本体|大容量|セット|[SML])/);
 
+  if (/洗剤|アタック|アリエール|トップ|ナノックス|NANOX/i.test(text)) els.category.value = "洗剤";
+  if (/柔軟剤|レノア|ソフラン|ハミング/i.test(text)) els.category.value = "柔軟剤";
+  if (/おしりふき|お尻ふき|尻ふき/i.test(text)) els.category.value = "おしりふき";
   if (yenMatches.length) els.price.value = Math.max(...yenMatches);
   if (countMatch) els.count.value = countMatch[1];
   if (sizeMatch) {
@@ -435,6 +446,7 @@ function recordFromForm() {
   const numbers = getNumbers();
   return {
     id: createId(),
+    category: els.category.value || "おむつ",
     productName: els.productName.value.trim(),
     size: els.size.value,
     count: numbers.count,
@@ -476,17 +488,23 @@ function closeImageViewer() {
 }
 
 function renderBest() {
+  const filterCategory = els.filterCategory.value;
   const filterSize = els.filterSize.value;
   const bestByKey = new Map();
 
   for (const item of history) {
+    const category = item.category || "おむつ";
+    if (filterCategory && category !== filterCategory) continue;
     if (filterSize && item.size !== filterSize) continue;
     const key = bestKey(item);
     const current = bestByKey.get(key);
     if (!current || item.unitPrice < current.unitPrice) bestByKey.set(key, item);
   }
 
-  const bestItems = [...bestByKey.values()].sort((a, b) => a.unitPrice - b.unitPrice);
+  const bestItems = [...bestByKey.values()].sort((a, b) => {
+    const categoryCompare = (a.category || "おむつ").localeCompare(b.category || "おむつ", "ja-JP");
+    return categoryCompare || a.unitPrice - b.unitPrice;
+  });
   els.bestList.innerHTML = "";
 
   if (!bestItems.length) {
@@ -494,13 +512,22 @@ function renderBest() {
     return;
   }
 
+  let currentCategory = "";
   for (const item of bestItems) {
+    const category = item.category || "おむつ";
+    if (category !== currentCategory) {
+      currentCategory = category;
+      const heading = document.createElement("h3");
+      heading.className = "best-category-title";
+      heading.textContent = category;
+      els.bestList.append(heading);
+    }
     const card = document.createElement("article");
     card.className = "best-card";
     card.innerHTML = `
       <span>${item.productName} / ${item.size}</span>
       <strong>${unit(item.unitPrice)}</strong>
-      <span>${item.count}枚 ${yen(item.net)} / ${item.store || "店舗未入力"} / ${item.date}</span>
+      <span>${item.count}単位 ${yen(item.net)} / ${item.store || "店舗未入力"} / ${item.date}</span>
     `;
     els.bestList.append(card);
   }
@@ -510,6 +537,7 @@ function renderHistory() {
   const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const signature = JSON.stringify(sortedHistory.map((item) => [
     item.id,
+    item.category || "おむつ",
     item.productName,
     item.size,
     item.count,
@@ -557,11 +585,12 @@ function renderHistory() {
     node.querySelector(".item-date span").textContent = item.store || "店舗未入力";
     node.querySelector("h3").textContent = `${item.productName} / ${item.size}`;
     const tags = node.querySelectorAll(".item-tags span");
-    tags[0].textContent = `${item.count}枚`;
-    tags[1].textContent = `店頭 ${yen(item.price)} / 値引 ${yen(item.coupon)} / CB ${yen(item.cashback)}`;
+    tags[0].textContent = item.category || "おむつ";
+    tags[1].textContent = `${item.count}単位`;
+    tags[2].textContent = `店頭 ${yen(item.price)} / 値引 ${yen(item.coupon)} / CB ${yen(item.cashback)}`;
     node.querySelector(".item-note").textContent = item.memo;
     node.querySelector(".item-price strong").textContent = yen(item.net);
-    node.querySelector(".item-price span").textContent = `${unit(item.unitPrice)} / 枚`;
+    node.querySelector(".item-price span").textContent = `${unit(item.unitPrice)} / 単位`;
     node.querySelector("button").addEventListener("click", () => {
       history = history.filter((record) => record.id !== item.id);
       saveHistory();
@@ -578,9 +607,10 @@ function render() {
 }
 
 function exportCsv() {
-  const header = ["日付", "商品名", "サイズ", "枚数", "価格", "クーポン", "CB", "実質価格", "1枚単価", "店舗", "メモ"];
+  const header = ["日付", "種別", "商品名", "サイズ/規格", "枚数/容量/個数", "価格", "クーポン", "CB", "実質価格", "1単位単価", "店舗", "メモ"];
   const rows = history.map((item) => [
     item.date,
+    item.category || "おむつ",
     item.productName,
     item.size,
     item.count,
@@ -687,6 +717,7 @@ els.refreshApp.addEventListener("click", () => {
   refreshApp().catch(() => window.location.reload());
 });
 els.filterSize.addEventListener("change", renderBest);
+els.filterCategory.addEventListener("change", renderBest);
 
 updateGeminiStatus();
 render();

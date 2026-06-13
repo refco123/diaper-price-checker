@@ -525,6 +525,14 @@ textarea:focus {
   gap: 10px;
 }
 
+.best-category-title {
+  grid-column: 1 / -1;
+  margin: 8px 2px 0;
+  color: var(--good);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
 .best-list {
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
@@ -757,6 +765,7 @@ textarea:focus {
   }
 
   .form-grid label:first-child,
+  .form-grid label:nth-child(2),
   .memo-field {
     grid-column: 1 / -1;
   }
