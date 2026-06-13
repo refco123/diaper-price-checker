@@ -69,10 +69,10 @@
         <svg><use href="#icon-check"></use></svg>
         チェック
       </button>
-      <button class="tab-button camera-tab-button" id="openCamera" type="button" data-tab="camera" aria-selected="false">
+      <label class="tab-button camera-tab-button" for="nativeCameraInput">
         <span><svg><use href="#icon-camera"></use></svg></span>
         カメラ
-      </button>
+      </label>
       <button class="tab-button" type="button" data-tab="history" aria-selected="false">
         <svg><use href="#icon-history"></use></svg>
         履歴
@@ -84,7 +84,7 @@
         <section class="capture-panel" aria-label="撮影と画像読み取り">
           <div class="camera-frame">
             <img id="preview" alt="撮影した商品画像のプレビュー" hidden />
-            <input id="nativeCameraInput" class="native-camera-input" type="file" accept="image/*" capture="environment" aria-hidden="true" tabindex="-1" />
+            <input id="nativeCameraInput" class="native-camera-input" type="file" accept="image/*" capture="environment" />
             <div id="emptyPreview" class="empty-preview">
               <strong>商品と値札を撮影</strong>
               <span>下のカメラボタンで撮影</span>

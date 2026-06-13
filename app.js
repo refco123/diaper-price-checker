@@ -12,9 +12,8 @@ const els = {
   preview: document.querySelector("#preview"),
   nativeCameraInput: document.querySelector("#nativeCameraInput"),
   emptyPreview: document.querySelector("#emptyPreview"),
-  tabButtons: document.querySelectorAll(".tab-button"),
+  tabButtons: document.querySelectorAll(".tab-button[data-tab]"),
   tabPanels: document.querySelectorAll(".tab-panel"),
-  openCamera: document.querySelector("#openCamera"),
   runOcr: document.querySelector("#runOcr"),
   ocrStatus: document.querySelector("#ocrStatus"),
   form: document.querySelector("#priceForm"),
@@ -55,6 +54,11 @@ function loadHistory() {
 
 function saveHistory() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+}
+
+function createId() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function yen(value) {
@@ -134,12 +138,6 @@ function setImage(dataUrl) {
   els.emptyPreview.hidden = true;
 }
 
-function openNativeCamera() {
-  els.nativeCameraInput.value = "";
-  els.nativeCameraInput.click();
-  els.ocrStatus.textContent = "スマホのカメラで商品と値札を撮影してください。";
-}
-
 function parseText(text) {
   const normalized = text.replace(/[,\s]/g, "");
   const yenMatches = [...normalized.matchAll(/([0-9]{2,6})円/g)].map((match) => Number(match[1]));
@@ -191,7 +189,7 @@ async function runOcr() {
 function recordFromForm() {
   const numbers = getNumbers();
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     productName: els.productName.value.trim(),
     size: els.size.value,
     count: numbers.count,
@@ -211,7 +209,7 @@ function recordFromForm() {
 function fillSample() {
   const sampleDate = new Date().toISOString().slice(0, 10);
   const benchmark = {
-    id: crypto.randomUUID(),
+    id: createId(),
     productName: "メリーズ エアスルー",
     size: "L",
     count: 54,
@@ -355,7 +353,10 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
-els.openCamera.addEventListener("click", openNativeCamera);
+els.nativeCameraInput.addEventListener("click", () => {
+  els.nativeCameraInput.value = "";
+  els.ocrStatus.textContent = "スマホのカメラで商品と値札を撮影してください。";
+});
 els.nativeCameraInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -386,7 +387,13 @@ els.form.addEventListener("submit", (event) => {
   clearForm();
   switchTab("history");
 });
-els.sampleFill.addEventListener("click", fillSample);
+els.sampleFill.addEventListener("click", () => {
+  try {
+    fillSample();
+  } catch (error) {
+    els.ocrStatus.textContent = `サンプル入力に失敗しました: ${error.message}`;
+  }
+});
 els.clearForm.addEventListener("click", clearForm);
 els.clearHistory.addEventListener("click", () => {
   if (!history.length) return;
