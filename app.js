@@ -45,6 +45,7 @@ const els = {
   template: document.querySelector("#historyItemTemplate"),
   imageViewer: document.querySelector("#imageViewer"),
   viewerImage: document.querySelector("#viewerImage"),
+  captureChooser: document.querySelector("#captureChooser"),
 };
 
 let imageDataUrl = "";
@@ -586,6 +587,16 @@ function closeImageViewer() {
   document.body.classList.remove("viewer-open");
 }
 
+function openCaptureChooser() {
+  els.captureChooser.hidden = false;
+  document.body.classList.add("viewer-open");
+}
+
+function closeCaptureChooser() {
+  els.captureChooser.hidden = true;
+  document.body.classList.remove("viewer-open");
+}
+
 function renderBest() {
   const filterCategory = els.filterCategory.value;
   const filterSize = els.filterSize.value;
@@ -785,6 +796,24 @@ document.addEventListener("click", (event) => {
     event.preventDefault();
     openFileInput(els.imageInput, "商品と値札の画像を選んでください。");
   }
+  if (action === "open-capture-choice") {
+    event.preventDefault();
+    openCaptureChooser();
+  }
+  if (action === "close-capture-choice") {
+    event.preventDefault();
+    closeCaptureChooser();
+  }
+  if (action === "choose-camera") {
+    event.preventDefault();
+    closeCaptureChooser();
+    openFileInput(els.nativeCameraInput, "スマホのカメラで商品と値札を撮影してください。");
+  }
+  if (action === "choose-image") {
+    event.preventDefault();
+    closeCaptureChooser();
+    openFileInput(els.imageInput, "商品と値札の画像を選んでください。");
+  }
   if (action === "close-viewer") {
     event.preventDefault();
     closeImageViewer();
@@ -804,6 +833,7 @@ document.addEventListener("click", (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !els.imageViewer.hidden) closeImageViewer();
+  if (event.key === "Escape" && !els.captureChooser.hidden) closeCaptureChooser();
 });
 els.form.addEventListener("input", updateCalculated);
 els.form.addEventListener("submit", (event) => {

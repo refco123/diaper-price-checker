@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=34" />
+    <link rel="stylesheet" href="styles.css?v=35" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -111,14 +111,13 @@
     <main class="app-shell">
       <div class="tab-panel is-active" data-panel="check">
         <section class="capture-panel" aria-label="撮影と画像読み取り">
-          <div class="camera-frame">
+          <button class="camera-frame" type="button" data-action="open-capture-choice" aria-label="画像を撮影または追加">
             <img id="preview" alt="" hidden style="display: none" />
-            <div id="emptyPreview" class="empty-preview" aria-label="画像未選択"></div>
-          </div>
-
-          <div class="capture-actions">
-            <button class="secondary" type="button" data-action="open-image"><svg><use href="#icon-plus"></use></svg>画像</button>
-          </div>
+            <span id="emptyPreview" class="empty-preview" aria-label="画像未選択">
+              <span class="empty-preview-icon"><svg><use href="#icon-plus"></use></svg></span>
+              <strong>画像を撮影/追加</strong>
+            </span>
+          </button>
 
           <div id="geminiStatus" class="gemini-status" role="status"></div>
           <div id="ocrStatus" class="status" role="status">撮影した画像から読み取れた文字は入力欄へ反映できます。</div>
@@ -293,6 +292,14 @@
           <svg><use href="#icon-close"></use></svg>
         </button>
         <img id="viewerImage" alt="保存した商品画像の拡大表示" />
+      </div>
+    </div>
+
+    <div id="captureChooser" class="capture-chooser" hidden>
+      <button class="capture-chooser-backdrop" type="button" data-action="close-capture-choice" aria-label="選択を閉じる"></button>
+      <div class="capture-chooser-panel" role="dialog" aria-modal="true" aria-label="画像の追加方法を選択">
+        <button type="button" data-action="choose-camera"><svg><use href="#icon-camera"></use></svg>カメラで撮影</button>
+        <button type="button" data-action="choose-image"><svg><use href="#icon-plus"></use></svg>画像を選択</button>
       </div>
     </div>
 
