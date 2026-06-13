@@ -738,7 +738,6 @@ body::before {
 }
 
 .app-header,
-.app-tabs,
 .app-shell {
   position: relative;
 }
@@ -910,4 +909,19 @@ textarea:focus {
 
 .empty-state {
   border-style: solid;
+}
+
+.app-tabs {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: 10px;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+@supports (bottom: env(safe-area-inset-bottom)) {
+  .app-tabs {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+  }
 }
