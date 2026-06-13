@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#12736b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="オムツ単価" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>オムツ単価チェッカー</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="app-icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-camera" viewBox="0 0 24 24">
+        <path d="M14.5 5 13 3H8L6.5 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-5.5Z"></path>
+        <circle cx="12" cy="12.5" r="3.5"></circle>
+      </symbol>
+      <symbol id="icon-scan" viewBox="0 0 24 24">
+        <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"></path>
+      </symbol>
+      <symbol id="icon-shutter" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8"></circle>
+        <circle cx="12" cy="12" r="3"></circle>
+      </symbol>
+      <symbol id="icon-history" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2"></path>
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6"></path>
+      </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path>
+      </symbol>
+      <symbol id="icon-save" viewBox="0 0 24 24">
+        <path d="M5 3h12l2 2v16H5V3Z"></path>
+        <path d="M8 3v6h8V3M8 21v-7h8v7"></path>
+      </symbol>
+      <symbol id="icon-spark" viewBox="0 0 24 24">
+        <path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3ZM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z"></path>
+      </symbol>
+      <symbol id="icon-eraser" viewBox="0 0 24 24">
+        <path d="m4 15 8-8a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-6 6H8l-4-4a1.5 1.5 0 0 1 0-2Z"></path>
+        <path d="m9 10 6 6M14 20h7"></path>
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"></path>
+      </symbol>
+    </svg>
+
+    <header class="app-header">
+      <div class="brand-mark" aria-hidden="true">
+        <svg><use href="#icon-scan"></use></svg>
+      </div>
+      <div class="brand-copy">
+        <p class="eyebrow">Diaper Price Checker</p>
+        <h1>オムツ単価チェッカー</h1>
+      </div>
+      <button id="exportCsv" class="icon-button" type="button" title="CSVを書き出す" aria-label="CSVを書き出す">
+        <svg><use href="#icon-download"></use></svg>
+      </button>
+    </header>
+
+    <nav class="app-tabs" aria-label="画面切り替え">
+      <button class="tab-button is-active" type="button" data-tab="check" aria-selected="true">
+        <svg><use href="#icon-check"></use></svg>
+        チェック
+      </button>
+      <button class="tab-button" type="button" data-tab="history" aria-selected="false">
+        <svg><use href="#icon-history"></use></svg>
+        履歴
+      </button>
+    </nav>
+
+    <main class="app-shell">
+      <div class="tab-panel is-active" data-panel="check">
+        <section class="capture-panel" aria-label="撮影と画像読み取り">
+          <div class="camera-frame">
+            <video id="camera" autoplay playsinline muted></video>
+            <img id="preview" alt="撮影した商品画像のプレビュー" hidden />
+            <canvas id="snapshot" hidden></canvas>
+            <div id="emptyPreview" class="empty-preview">
+              <strong>商品と値札を撮影</strong>
+              <span>カメラで単価チェック</span>
+            </div>
+          </div>
+
+          <div class="toolbar" role="group" aria-label="撮影操作">
+            <button id="startCamera" type="button"><svg><use href="#icon-camera"></use></svg>カメラ</button>
+            <button id="takePhoto" type="button" disabled><svg><use href="#icon-shutter"></use></svg>撮影</button>
+            <button id="runOcr" type="button"><svg><use href="#icon-scan"></use></svg>読取</button>
+          </div>
+
+          <div id="ocrStatus" class="status" role="status">撮影した画像から読み取れた文字は入力欄へ反映できます。</div>
+        </section>
+
+        <section class="entry-panel" aria-label="商品情報入力">
+          <form id="priceForm">
+            <div class="form-grid">
+              <label>
+                商品名
+                <input id="productName" name="productName" autocomplete="off" placeholder="例: パンパース さらさらケア" required />
+              </label>
+              <label>
+                サイズ
+                <select id="size" name="size" required>
+                  <option value="">選択</option>
+                  <option>新生児</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>Big</option>
+                  <option>Bigより大きい</option>
+                  <option>おやすみ</option>
+                </select>
+              </label>
+              <label>
+                枚数
+                <input id="count" name="count" inputmode="numeric" type="number" min="1" step="1" placeholder="例: 64" required />
+              </label>
+              <label>
+                店頭価格
+                <input id="price" name="price" inputmode="numeric" type="number" min="0" step="1" placeholder="円" required />
+              </label>
+              <label>
+                クーポン値引き
+                <input id="coupon" name="coupon" inputmode="numeric" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                CB・ポイント還元
+                <input id="cashback" name="cashback" inputmode="numeric" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                店舗・サイト
+                <input id="store" name="store" autocomplete="off" placeholder="例: ウエルシア" />
+              </label>
+              <label>
+                購入日
+                <input id="date" name="date" type="date" required />
+              </label>
+            </div>
+
+            <label class="memo-field">
+              メモ
+              <textarea id="memo" name="memo" rows="3" placeholder="例: 2個購入で追加10%還元"></textarea>
+            </label>
+
+            <div class="result-strip">
+              <div>
+                <span>実質合計</span>
+                <strong id="netPrice">0円</strong>
+              </div>
+              <div>
+                <span>1枚単価</span>
+                <strong id="unitPrice">0.00円</strong>
+              </div>
+              <div>
+                <span>最安比較</span>
+                <strong id="bestCompare">未記録</strong>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="sampleFill" class="secondary" type="button"><svg><use href="#icon-spark"></use></svg>サンプル</button>
+              <button id="clearForm" class="secondary" type="button"><svg><use href="#icon-eraser"></use></svg>クリア</button>
+              <button type="submit"><svg><use href="#icon-save"></use></svg>保存</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="tab-panel" data-panel="history" hidden>
+        <section class="best-panel" aria-label="最安値">
+          <div class="section-title">
+            <h2>現在の最安値</h2>
+            <select id="filterSize" aria-label="サイズで絞り込み">
+              <option value="">全サイズ</option>
+              <option>新生児</option>
+              <option>S</option>
+              <option>M</option>
+              <option>L</option>
+              <option>Big</option>
+              <option>Bigより大きい</option>
+              <option>おやすみ</option>
+            </select>
+          </div>
+          <div id="bestList" class="best-list"></div>
+        </section>
+
+        <section class="history-panel" aria-label="履歴">
+          <div class="section-title">
+            <h2>履歴</h2>
+            <button id="clearHistory" class="danger" type="button"><svg><use href="#icon-trash"></use></svg>全削除</button>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </div>
+    </main>
+
+    <template id="historyItemTemplate">
+      <article class="history-item">
+        <div class="item-date">
+          <strong></strong>
+          <span></span>
+        </div>
+        <div class="item-main">
+          <h3></h3>
+          <div class="item-tags">
+            <span></span>
+            <span></span>
+          </div>
+          <p class="item-note"></p>
+        </div>
+        <div class="item-price">
+          <strong></strong>
+          <span></span>
+          <button type="button" title="削除" aria-label="履歴を削除"><svg><use href="#icon-trash"></use></svg></button>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
