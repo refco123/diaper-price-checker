@@ -572,6 +572,20 @@ function editHistoryItem(id) {
 }
 
 function deleteHistoryItem(id) {
+  const target = history.find((record) => record.id === id);
+  if (!target) return;
+  const message = [
+    "この履歴を削除しますか？",
+    "",
+    `商品: ${target.productName || "未入力"}`,
+    `店舗: ${target.store || "未入力"}`,
+    `金額: ${yen(target.net || target.price || 0)}`,
+    `単価: ${unit(target.unitPrice || 0)}`,
+    "",
+    "削除すると元に戻せません。",
+  ].join("\n");
+  if (!confirm(message)) return;
+
   const before = history.length;
   history = history.filter((record) => record.id !== id);
   if (history.length === before) return;
