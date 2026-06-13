@@ -334,16 +334,7 @@ h1 {
 }
 
 .empty-preview::before {
-  content: "";
-  width: 58px;
-  height: 58px;
-  margin: 0 auto 6px;
-  border-radius: 18px;
-  background:
-    linear-gradient(#edf5f2, #edf5f2) center / 28px 2px no-repeat,
-    linear-gradient(90deg, #edf5f2, #edf5f2) center / 2px 28px no-repeat,
-    rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  content: none;
 }
 
 .capture-actions {
@@ -1019,12 +1010,7 @@ button:hover,
 }
 
 .empty-preview::before {
-  border-color: rgba(82, 233, 255, 0.5);
-  background:
-    linear-gradient(#52e9ff, #52e9ff) center / 28px 2px no-repeat,
-    linear-gradient(90deg, #52e9ff, #52e9ff) center / 2px 28px no-repeat,
-    rgba(82, 233, 255, 0.09);
-  box-shadow: 0 0 24px rgba(82, 233, 255, 0.24);
+  content: none;
 }
 
 .empty-preview span,
