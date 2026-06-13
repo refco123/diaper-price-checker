@@ -19,6 +19,7 @@ const els = {
   tabPanels: document.querySelectorAll(".tab-panel"),
   runOcr: document.querySelector("#runOcr"),
   ocrStatus: document.querySelector("#ocrStatus"),
+  geminiStatus: document.querySelector("#geminiStatus"),
   form: document.querySelector("#priceForm"),
   productName: document.querySelector("#productName"),
   size: document.querySelector("#size"),
@@ -164,11 +165,34 @@ function handleImageFile(file) {
 function getGeminiKey() {
   let key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
   if (!key) {
-    key = prompt("Gemini APIキーを入力してください。端末内に保存され、GitHubには保存されません。") || "";
+    key = prompt("このブラウザ用のGemini APIキーを入力してください。端末内に保存され、GitHubには保存されません。スマホとPCブラウザでは別々に設定が必要です。") || "";
     key = key.trim();
     if (key) localStorage.setItem(GEMINI_KEY_STORAGE, key);
   }
+  updateGeminiStatus();
   return key;
+}
+
+function setGeminiKey() {
+  const currentKey = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
+  const key = prompt("Gemini APIキーを入力してください。空欄で保存するとGeminiをOFFにします。", currentKey) ?? currentKey;
+  const trimmedKey = key.trim();
+  if (trimmedKey) {
+    localStorage.setItem(GEMINI_KEY_STORAGE, trimmedKey);
+    els.ocrStatus.textContent = "Gemini APIキーをこのブラウザに保存しました。";
+  } else {
+    localStorage.removeItem(GEMINI_KEY_STORAGE);
+    els.ocrStatus.textContent = "Gemini APIキーを削除しました。ローカルOCRで読み取ります。";
+  }
+  updateGeminiStatus();
+}
+
+function updateGeminiStatus(extra = "") {
+  const hasKey = Boolean(localStorage.getItem(GEMINI_KEY_STORAGE));
+  els.geminiStatus.dataset.ready = String(hasKey);
+  els.geminiStatus.textContent = hasKey
+    ? `Gemini: ON（このブラウザで使用）${extra}`
+    : "Gemini: OFF（PCブラウザ・スマホごとに設定が必要）";
 }
 
 async function loadImage(dataUrl) {
@@ -307,12 +331,17 @@ async function runGeminiOcr() {
 
   if (!response.ok) {
     if (response.status === 400 || response.status === 403) localStorage.removeItem(GEMINI_KEY_STORAGE);
-    throw new Error(`Gemini API Error: ${response.status}`);
+    updateGeminiStatus(` / API Error ${response.status}`);
+    const detail = response.status === 403
+      ? "APIキーの制限にこのURLを許可する必要があります"
+      : `Gemini API Error: ${response.status}`;
+    throw new Error(detail);
   }
   const data = await response.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   const result = extractJson(text);
   applyGeminiResult(result);
+  updateGeminiStatus(" / 最終読取: Gemini");
   els.ocrStatus.textContent = `Gemini読取を反映しました。${result.memo || "違う場合は手入力で直してください。"}`;
 }
 
@@ -347,6 +376,7 @@ async function runOcr() {
     await runGeminiOcr();
     return;
   } catch (error) {
+    updateGeminiStatus(` / Gemini失敗: ${error.message}`);
     els.ocrStatus.textContent = `${error.message} ローカルOCRに切り替えます...`;
   }
 
@@ -601,6 +631,10 @@ document.addEventListener("click", (event) => {
       els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
     });
   }
+  if (action === "set-gemini") {
+    event.preventDefault();
+    setGeminiKey();
+  }
   if (action === "clear-form") {
     event.preventDefault();
     clearForm();
@@ -631,4 +665,5 @@ els.refreshApp.addEventListener("click", () => {
 });
 els.filterSize.addEventListener("change", renderBest);
 
+updateGeminiStatus();
 render();
