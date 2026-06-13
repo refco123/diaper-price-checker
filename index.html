@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="app-icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=22" />
+    <link rel="stylesheet" href="styles.css?v=23" />
     <style>
       .app-tabs {
         position: fixed !important;
@@ -37,6 +37,9 @@
       <symbol id="icon-camera" viewBox="0 0 24 24">
         <path d="M14.5 5 13 3H8L6.5 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-5.5Z"></path>
         <circle cx="12" cy="12.5" r="3.5"></circle>
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14"></path>
       </symbol>
       <symbol id="icon-scan" viewBox="0 0 24 24">
         <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"></path>
@@ -106,15 +109,11 @@
         <section class="capture-panel" aria-label="撮影と画像読み取り">
           <div class="camera-frame">
             <img id="preview" alt="撮影した商品画像のプレビュー" hidden />
-            <div id="emptyPreview" class="empty-preview">
-              <strong>商品と値札を撮影</strong>
-              <span>下のカメラボタンで撮影</span>
-            </div>
+            <div id="emptyPreview" class="empty-preview" aria-label="画像未選択"></div>
           </div>
 
           <div class="capture-actions">
-            <button class="secondary" type="button" data-action="open-image"><svg><use href="#icon-camera"></use></svg>画像</button>
-            <button class="secondary" type="button" data-action="set-gemini"><svg><use href="#icon-scan"></use></svg>Gemini設定</button>
+            <button class="secondary" type="button" data-action="open-image"><svg><use href="#icon-plus"></use></svg>画像</button>
             <button id="runOcr" class="scan-button" type="button" data-action="run-ocr"><svg><use href="#icon-scan"></use></svg>画像を読み取る</button>
           </div>
 

@@ -346,13 +346,9 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
-.empty-preview span {
-  color: #bac9c5;
-}
-
 .capture-actions {
   display: grid;
-  grid-template-columns: 0.72fr 0.88fr 1fr;
+  grid-template-columns: 0.72fr 1fr;
   gap: 8px;
   margin-top: 12px;
 }

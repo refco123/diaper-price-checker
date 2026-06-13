@@ -677,10 +677,6 @@ document.addEventListener("click", (event) => {
       els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
     });
   }
-  if (action === "set-gemini") {
-    event.preventDefault();
-    setGeminiKey();
-  }
   if (action === "close-viewer") {
     event.preventDefault();
     closeImageViewer();
