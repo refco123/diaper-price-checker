@@ -123,6 +123,10 @@ svg {
   backdrop-filter: blur(12px);
 }
 
+.app-header .icon-button {
+  flex: 0 0 44px;
+}
+
 .brand-mark {
   width: 42px;
   height: 42px;

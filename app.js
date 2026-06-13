@@ -34,6 +34,7 @@ const els = {
   clearForm: document.querySelector("#clearForm"),
   clearHistory: document.querySelector("#clearHistory"),
   exportCsv: document.querySelector("#exportCsv"),
+  refreshApp: document.querySelector("#refreshApp"),
   filterSize: document.querySelector("#filterSize"),
   bestList: document.querySelector("#bestList"),
   historyList: document.querySelector("#historyList"),
@@ -156,9 +157,53 @@ function handleImageFile(file) {
   reader.readAsDataURL(file);
 }
 
+async function loadImage(dataUrl) {
+  const img = new Image();
+  img.src = dataUrl;
+  await img.decode();
+  return img;
+}
+
+function preprocessImage(img, options = {}) {
+  const scale = options.scale || 2;
+  const crop = options.crop || { x: 0, y: 0, width: 1, height: 1 };
+  const sourceX = Math.round(img.naturalWidth * crop.x);
+  const sourceY = Math.round(img.naturalHeight * crop.y);
+  const sourceWidth = Math.round(img.naturalWidth * crop.width);
+  const sourceHeight = Math.round(img.naturalHeight * crop.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, sourceWidth * scale);
+  canvas.height = Math.max(1, sourceHeight * scale);
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  context.imageSmoothingEnabled = true;
+  context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
+  const contrast = options.contrast || 1.35;
+  const brightness = options.brightness || 12;
+  for (let index = 0; index < image.data.length; index += 4) {
+    const gray = image.data[index] * 0.299 + image.data[index + 1] * 0.587 + image.data[index + 2] * 0.114;
+    const adjusted = Math.max(0, Math.min(255, (gray - 128) * contrast + 128 + brightness));
+    const value = options.threshold ? (adjusted > options.threshold ? 255 : 0) : adjusted;
+    image.data[index] = value;
+    image.data[index + 1] = value;
+    image.data[index + 2] = value;
+  }
+  context.putImageData(image, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+function extractAmounts(text) {
+  const compact = text.replace(/[，]/g, ",").replace(/[￥¥]/g, "円");
+  const matches = [...compact.matchAll(/(?:税込|税抜|各)?\s*([0-9]{1,3}(?:,[0-9]{3})|[0-9]{3,6})\s*円?/g)];
+  return matches
+    .map((match) => Number(match[1].replaceAll(",", "")))
+    .filter((value) => value >= 100 && value <= 50000);
+}
+
 function parseText(text) {
   const normalized = text.replace(/[,\s]/g, "");
-  const yenMatches = [...normalized.matchAll(/([0-9]{2,6})円/g)].map((match) => Number(match[1]));
+  const yenMatches = extractAmounts(text);
   const countMatch = normalized.match(/([0-9]{1,3})(枚|個入|枚入)/);
   const sizeMatch = normalized.match(/(新生児|Bigより大きい|BIGより大きい|Big|BIG|[SML])/);
 
@@ -184,9 +229,7 @@ async function runOcr() {
   }
 
   els.ocrStatus.textContent = "画像を読み取っています...";
-  const img = new Image();
-  img.src = imageDataUrl;
-  await img.decode();
+  const img = await loadImage(imageDataUrl);
 
   let text = "";
   if ("TextDetector" in window) {
@@ -194,14 +237,33 @@ async function runOcr() {
     const result = await detector.detect(img);
     text = result.map((item) => item.rawValue).join("\n");
   } else if (window.Tesseract?.recognize) {
-    const result = await Tesseract.recognize(imageDataUrl, "jpn+eng", {
+    const fullImage = preprocessImage(img, { scale: 1.8, contrast: 1.35, brightness: 8 });
+    const priceStrip = preprocessImage(img, {
+      scale: 3,
+      crop: { x: 0, y: 0.42, width: 1, height: 0.36 },
+      contrast: 1.75,
+      brightness: 18,
+      threshold: 145,
+    });
+
+    const fullResult = await Tesseract.recognize(fullImage, "jpn+eng", {
       logger: (message) => {
         if (message.status === "recognizing text") {
-          els.ocrStatus.textContent = `画像を読み取っています... ${Math.round(message.progress * 100)}%`;
+          els.ocrStatus.textContent = `商品情報を読み取っています... ${Math.round(message.progress * 100)}%`;
         }
       },
     });
-    text = result.data?.text || "";
+
+    const priceResult = await Tesseract.recognize(priceStrip, "eng", {
+      tessedit_char_whitelist: "0123456789,円税込税抜各￥¥.",
+      logger: (message) => {
+        if (message.status === "recognizing text") {
+          els.ocrStatus.textContent = `値札を読み取っています... ${Math.round(message.progress * 100)}%`;
+        }
+      },
+    });
+
+    text = `${fullResult.data?.text || ""}\n${priceResult.data?.text || ""}`;
   } else {
     els.ocrStatus.textContent = "OCRエンジンを読み込めませんでした。通信環境を確認して、再読み込みしてください。";
     return;
@@ -212,7 +274,7 @@ async function runOcr() {
     return;
   }
   parseText(text);
-  els.ocrStatus.textContent = `読取候補を反映しました: ${text.slice(0, 90)}`;
+  els.ocrStatus.textContent = `読取候補を反映しました。違う場合は手入力で直してください: ${text.replace(/\s+/g, " ").slice(0, 110)}`;
 }
 
 function recordFromForm() {
@@ -382,6 +444,19 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
+async function refreshApp() {
+  els.ocrStatus.textContent = "アプリのキャッシュを更新しています...";
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+  window.location.reload();
+}
+
 els.nativeCameraInput.addEventListener("change", (event) => {
   handleImageFile(event.target.files?.[0]);
 });
@@ -445,6 +520,9 @@ els.form.addEventListener("submit", (event) => {
   switchTab("history");
 });
 els.exportCsv.addEventListener("click", exportCsv);
+els.refreshApp.addEventListener("click", () => {
+  refreshApp().catch(() => window.location.reload());
+});
 els.filterSize.addEventListener("change", renderBest);
 
 render();
