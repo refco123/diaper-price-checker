@@ -788,10 +788,6 @@ document.addEventListener("click", (event) => {
   const actionButton = event.target.closest("[data-action]");
   if (!actionButton) return;
   const action = actionButton.dataset.action;
-  if (action === "open-camera") {
-    event.preventDefault();
-    openFileInput(els.nativeCameraInput, "スマホのカメラで商品と値札を撮影してください。");
-  }
   if (action === "open-image") {
     event.preventDefault();
     openFileInput(els.imageInput, "商品と値札の画像を選んでください。");
