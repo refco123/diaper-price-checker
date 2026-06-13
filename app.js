@@ -211,6 +211,7 @@ function setGeminiKey() {
 }
 
 function updateGeminiStatus(extra = "") {
+  if (!els.geminiStatus) return;
   const hasKey = Boolean(localStorage.getItem(GEMINI_KEY_STORAGE));
   els.geminiStatus.dataset.ready = String(hasKey);
   els.geminiStatus.textContent = hasKey
