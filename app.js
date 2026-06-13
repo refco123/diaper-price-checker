@@ -12,6 +12,7 @@ const els = {
   camera: document.querySelector("#camera"),
   preview: document.querySelector("#preview"),
   canvas: document.querySelector("#snapshot"),
+  nativeCameraInput: document.querySelector("#nativeCameraInput"),
   emptyPreview: document.querySelector("#emptyPreview"),
   tabButtons: document.querySelectorAll(".tab-button"),
   tabPanels: document.querySelectorAll(".tab-panel"),
@@ -138,25 +139,57 @@ function setImage(dataUrl) {
   els.emptyPreview.hidden = true;
 }
 
+function openNativeCamera() {
+  els.nativeCameraInput.value = "";
+  els.nativeCameraInput.click();
+  els.ocrStatus.textContent = "スマホのカメラで商品と値札を撮影してください。";
+}
+
+function waitForVideoReady(video) {
+  if (video.readyState >= 2 && video.videoWidth > 0) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("カメラ映像の準備に時間がかかっています。")), 8000);
+    video.addEventListener(
+      "loadedmetadata",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
+}
+
 async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
-    els.ocrStatus.textContent = "このブラウザではカメラを利用できません。スマホのブラウザで開くと撮影できます。";
+    openNativeCamera();
     return;
   }
 
-  stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: "environment" } },
-    audio: false,
-  });
-  els.camera.srcObject = stream;
-  els.camera.hidden = false;
-  els.preview.hidden = true;
-  els.emptyPreview.hidden = true;
-  els.takePhoto.disabled = false;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } },
+      audio: false,
+    });
+    els.camera.srcObject = stream;
+    els.camera.hidden = false;
+    els.preview.hidden = true;
+    els.emptyPreview.hidden = true;
+    await els.camera.play();
+    await waitForVideoReady(els.camera);
+    els.takePhoto.disabled = false;
+    els.ocrStatus.textContent = "カメラ準備OKです。商品と値札を入れて撮影してください。";
+  } catch {
+    openNativeCamera();
+  }
 }
 
 function takePhoto() {
   const video = els.camera;
+  if (!stream || video.videoWidth === 0 || video.videoHeight === 0) {
+    openNativeCamera();
+    return;
+  }
   const canvas = els.canvas;
   canvas.width = video.videoWidth || 1280;
   canvas.height = video.videoHeight || 960;
@@ -386,6 +419,17 @@ els.startCamera.addEventListener("click", () => {
   });
 });
 els.takePhoto.addEventListener("click", takePhoto);
+els.nativeCameraInput.addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    setImage(String(reader.result));
+    els.takePhoto.disabled = false;
+    els.ocrStatus.textContent = "撮影画像を読み込みました。必要なら読取を押してください。";
+  });
+  reader.readAsDataURL(file);
+});
 els.runOcr.addEventListener("click", () => {
   runOcr().catch((error) => {
     els.ocrStatus.textContent = `読取に失敗しました: ${error.message}`;
